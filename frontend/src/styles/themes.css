@@ -1,0 +1,261 @@
+/* CSS переменные для темной и светлой темы */
+:root {
+  /* Светлая тема (по умолчанию) */
+  --bg-primary: #ffffff;
+  --bg-secondary: #f5f5f5;
+  --bg-tertiary: #e0e0e0;
+  --text-primary: #212121;
+  --text-secondary: #757575;
+  --text-disabled: #bdbdbd;
+  --border-color: #e0e0e0;
+  --shadow: rgba(0, 0, 0, 0.1);
+  --accent-primary: #1976d2;
+  --accent-secondary: #42a5f5;
+  --success: #4caf50;
+  --warning: #ff9800;
+  --error: #f44336;
+  --info: #2196f3;
+  
+  /* Расширенные цвета для состояний */
+  --success-light: #e8f5e8;
+  --success-border: #4caf50;
+  --warning-light: #fff4e5;
+  --warning-border: #ffcc80;
+  --error-light: #ffebee;
+  --error-border: #f44336;
+  --info-light: #e3f2fd;
+  --info-border: #2196f3;
+  
+  /* Цвета для текста */
+  --text-muted: #666666;
+  --text-light: #555555;
+  --text-lighter: #888888;
+  
+  /* Цвета для фонов */
+  --bg-warning: #fff4e5;
+  --bg-success: #e8f5e8;
+  --bg-error: #ffebee;
+  --bg-info: #e3f2fd;
+  
+  /* Цвета для границ */
+  --border-warning: #ffcc80;
+  --border-success: #4caf50;
+  --border-error: #f44336;
+  --border-info: #2196f3;
+  
+  /* Цвета для изменений цен */
+  --price-increase: #e53e3e;
+  --price-decrease: #38a169;
+  --price-neutral: #718096;
+}
+
+[data-theme="dark"] {
+  /* Темная тема */
+  --bg-primary: #1a1a1a;
+  --bg-secondary: #2d2d2d;
+  --bg-tertiary: #404040;
+  --text-primary: #ffffff;
+  --text-secondary: #b0b0b0;
+  --text-disabled: #666666;
+  --border-color: #404040;
+  --shadow: rgba(0, 0, 0, 0.3);
+  --accent-primary: #42a5f5;
+  --accent-secondary: #64b5f6;
+  --success: #66bb6a;
+  --warning: #ffb74d;
+  --error: #ef5350;
+  --info: #42a5f5;
+  
+  /* Расширенные цвета для состояний (темная тема) */
+  --success-light: #1b5e20;
+  --success-border: #66bb6a;
+  --warning-light: #e65100;
+  --warning-border: #ffb74d;
+  --error-light: #b71c1c;
+  --error-border: #ef5350;
+  --info-light: #0d47a1;
+  --info-border: #42a5f5;
+  
+  /* Цвета для текста (темная тема) */
+  --text-muted: #b0b0b0;
+  --text-light: #cccccc;
+  --text-lighter: #999999;
+  
+  /* Цвета для фонов (темная тема) */
+  --bg-warning: #e65100;
+  --bg-success: #1b5e20;
+  --bg-error: #b71c1c;
+  --bg-info: #0d47a1;
+  
+  /* Цвета для границ (темная тема) */
+  --border-warning: #ffb74d;
+  --border-success: #66bb6a;
+  --border-error: #ef5350;
+  --border-info: #42a5f5;
+  
+  /* Цвета для изменений цен (темная тема) */
+  --price-increase: #ff6b6b;
+  --price-decrease: #51cf66;
+  --price-neutral: #adb5bd;
+}
+
+/* Базовые стили с использованием CSS переменных */
+body {
+  background-color: var(--bg-primary);
+  color: var(--text-primary);
+  transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+.card {
+  background-color: var(--bg-secondary);
+  border: 1px solid var(--border-color);
+  box-shadow: 0 2px 4px var(--shadow);
+  transition: background-color 0.3s ease, border-color 0.3s ease, box-shadow 0.3s ease;
+}
+
+.btn-primary {
+  background-color: var(--accent-primary);
+  border-color: var(--accent-primary);
+  color: white;
+  transition: background-color 0.3s ease, border-color 0.3s ease;
+}
+
+.btn-primary:hover {
+  background-color: var(--accent-secondary);
+  border-color: var(--accent-secondary);
+}
+
+.text-primary {
+  color: var(--text-primary) !important;
+}
+
+.text-secondary {
+  color: var(--text-secondary) !important;
+}
+
+.bg-primary {
+  background-color: var(--bg-primary) !important;
+}
+
+.bg-secondary {
+  background-color: var(--bg-secondary) !important;
+}
+
+.border {
+  border-color: var(--border-color) !important;
+}
+
+/* Стили для форм */
+.form-control {
+  background-color: var(--bg-primary);
+  border-color: var(--border-color);
+  color: var(--text-primary);
+  transition: background-color 0.3s ease, border-color 0.3s ease, color 0.3s ease;
+}
+
+.form-control:focus {
+  background-color: var(--bg-primary);
+  border-color: var(--accent-primary);
+  color: var(--text-primary);
+  box-shadow: 0 0 0 0.2rem rgba(66, 165, 245, 0.25);
+}
+
+/* Стили для таблиц */
+.table {
+  color: var(--text-primary);
+  background-color: var(--bg-primary);
+}
+
+.table-striped tbody tr:nth-of-type(odd) {
+  background-color: var(--bg-secondary);
+}
+
+.table-hover tbody tr:hover {
+  background-color: var(--bg-tertiary);
+}
+
+/* Стили для модальных окон */
+.modal-content {
+  background-color: var(--bg-primary);
+  border-color: var(--border-color);
+}
+
+.modal-header {
+  border-bottom-color: var(--border-color);
+}
+
+.modal-footer {
+  border-top-color: var(--border-color);
+}
+
+/* Стили для навигации */
+.navbar {
+  background-color: var(--bg-secondary);
+  border-bottom: 1px solid var(--border-color);
+}
+
+.nav-link {
+  color: var(--text-primary);
+  transition: color 0.3s ease;
+}
+
+.nav-link:hover {
+  color: var(--accent-primary);
+}
+
+/* Стили для уведомлений */
+.toast {
+  background-color: var(--bg-secondary);
+  border-color: var(--border-color);
+  color: var(--text-primary);
+}
+
+/* Стили для калькулятора */
+.calculator-panel {
+  background-color: var(--bg-secondary);
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  padding: 20px;
+  margin-bottom: 20px;
+}
+
+.calculator-result {
+  background-color: var(--bg-tertiary);
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  padding: 15px;
+  margin-top: 15px;
+}
+
+/* Анимации */
+.theme-transition {
+  transition: all 0.3s ease;
+}
+
+/* Стили для переключателя темы */
+.theme-toggle {
+  background: none;
+  border: 2px solid var(--border-color);
+  border-radius: 50px;
+  padding: 8px 16px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--text-primary);
+}
+
+.theme-toggle:hover {
+  border-color: var(--accent-primary);
+  background-color: var(--bg-tertiary);
+}
+
+.theme-toggle-icon {
+  font-size: 18px;
+  transition: transform 0.3s ease;
+}
+
+[data-theme="dark"] .theme-toggle-icon {
+  transform: rotate(180deg);
+}

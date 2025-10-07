@@ -1,0 +1,205 @@
+import { Request, Response } from 'express'
+import { AutoMaterialDeductionService } from '../services/autoMaterialDeductionService'
+import { logger } from '../utils/logger'
+import { AuthenticatedRequest } from '../middleware'
+
+export class AutoMaterialDeductionController {
+  /**
+   * Автоматическое списание материалов для заказа
+   */
+  static async deductForOrder = async (req: Request, res: Response) => {
+    try {
+      const orderId = Number(req.params.orderId)
+      const { items } = req.body
+      const authUser = (req as AuthenticatedRequest).user as { id: number } | undefined
+
+      if (!items || !Array.isArray(items)) {
+        res.status(400).json({
+          success: false,
+          error: 'Необходимо указать массив товаров (items)'
+        })
+        return
+      }
+
+      const result = await AutoMaterialDeductionService.deductMaterialsForOrder(
+        orderId,
+        items,
+        authUser?.id
+      )
+
+      if (result.success) {
+        res.json({
+          success: true,
+          data: result,
+          message: `Списано материалов: ${result.deductedMaterials.length}`
+        })
+      } else {
+        res.status(400).json({
+          success: false,
+          data: result,
+          message: 'Ошибки при списании материалов'
+        })
+      }
+    } catch (error: any) {
+      logger.error('Ошибка автоматического списания', error)
+      res.status(500).json({
+        success: false,
+        error: 'Ошибка автоматического списания материалов',
+        details: error.message
+      })
+    }
+  }
+
+  /**
+   * Получить историю списаний для заказа
+   */
+  static async getDeductionHistory = async (req: Request, res: Response) => {
+    try {
+      const orderId = Number(req.params.orderId)
+      
+      const history = await AutoMaterialDeductionService.getDeductionHistory(orderId)
+      
+      res.json({
+        success: true,
+        data: history
+      })
+    } catch (error: any) {
+      logger.error('Ошибка получения истории списаний', error)
+      res.status(500).json({
+        success: false,
+        error: 'Ошибка получения истории списаний',
+        details: error.message
+      })
+    }
+  }
+
+  /**
+   * Отменить списание материалов
+   */
+  static async cancelDeduction = async (req: Request, res: Response) => {
+    try {
+      const orderId = Number(req.params.orderId)
+      const authUser = (req as AuthenticatedRequest).user as { id: number } | undefined
+
+      const success = await AutoMaterialDeductionService.cancelDeduction(
+        orderId,
+        authUser?.id
+      )
+
+      if (success) {
+        res.json({
+          success: true,
+          message: 'Списание материалов отменено'
+        })
+      } else {
+        res.status(500).json({
+          success: false,
+          error: 'Ошибка отмены списания'
+        })
+      }
+    } catch (error: any) {
+      logger.error('Ошибка отмены списания', error)
+      res.status(500).json({
+        success: false,
+        error: 'Ошибка отмены списания',
+        details: error.message
+      })
+    }
+  }
+
+  /**
+   * Проверить доступность материалов для заказа
+   */
+  static async checkAvailability = async (req: Request, res: Response) => {
+    try {
+      const { items } = req.body
+
+      if (!items || !Array.isArray(items)) {
+        res.status(400).json({
+          success: false,
+          error: 'Необходимо указать массив товаров (items)'
+        })
+        return
+      }
+
+      // Собираем требования к материалам
+      const materialRequirements = []
+      
+      for (const item of items) {
+        if (item.components && item.components.length > 0) {
+          for (const component of item.components) {
+            materialRequirements.push({
+              materialId: component.materialId,
+              quantity: component.qtyPerItem * item.quantity,
+              reason: 'Проверка доступности'
+            })
+          }
+        }
+      }
+
+      // Группируем требования
+      const groupedRequirements = new Map()
+      for (const req of materialRequirements) {
+        if (groupedRequirements.has(req.materialId)) {
+          groupedRequirements.get(req.materialId).quantity += req.quantity
+        } else {
+          groupedRequirements.set(req.materialId, { ...req })
+        }
+      }
+
+      const requirements = Array.from(groupedRequirements.values())
+
+      // Проверяем доступность
+      const { getDb } = await import('../config/database')
+      const db = await getDb()
+      const warnings = []
+      const errors = []
+
+      for (const req of requirements) {
+        const material = await db.get(`
+          SELECT name, quantity, min_quantity 
+          FROM materials 
+          WHERE id = ?
+        `, req.materialId)
+
+        if (!material) {
+          errors.push(`Материал с ID ${req.materialId} не найден`)
+          continue
+        }
+
+        const availableQuantity = material.quantity
+        const minQuantity = material.min_quantity || 0
+        const remainingAfterDeduction = availableQuantity - req.quantity
+
+        if (remainingAfterDeduction < 0) {
+          errors.push(
+            `Недостаточно материала "${material.name}". Доступно: ${availableQuantity}, требуется: ${req.quantity}`
+          )
+        } else if (remainingAfterDeduction < minQuantity) {
+          warnings.push(
+            `После списания материала "${material.name}" остаток будет ниже минимального (${minQuantity})`
+          )
+        }
+      }
+
+      res.json({
+        success: errors.length === 0,
+        data: {
+          warnings,
+          errors,
+          requirements: requirements.map(req => ({
+            materialId: req.materialId,
+            requiredQuantity: req.quantity
+          }))
+        }
+      })
+    } catch (error: any) {
+      logger.error('Ошибка проверки доступности', error)
+      res.status(500).json({
+        success: false,
+        error: 'Ошибка проверки доступности материалов',
+        details: error.message
+      })
+    }
+  }
+}

@@ -1,0 +1,30 @@
+import { Router } from 'express';
+import { DatabasePricingController } from '../controllers/databasePricingController';
+
+const router = Router();
+
+// Базовые цены
+router.get('/base-prices', DatabasePricingController.getBasePrices);
+router.get('/base-prices/:productType/:productVariant', DatabasePricingController.getBasePrice);
+router.put('/base-prices/:productType/:productVariant', DatabasePricingController.updateBasePrice);
+router.post('/base-prices', DatabasePricingController.addBasePrice);
+
+// Множители срочности
+router.get('/urgency-multipliers', DatabasePricingController.getUrgencyMultipliers);
+router.put('/urgency-multipliers/:priceType', DatabasePricingController.updateUrgencyMultiplier);
+
+// Скидки по объему
+router.get('/volume-discounts', DatabasePricingController.getVolumeDiscounts);
+router.post('/volume-discounts', DatabasePricingController.addVolumeDiscount);
+router.put('/volume-discounts/:id', DatabasePricingController.updateVolumeDiscount);
+router.delete('/volume-discounts/:id', DatabasePricingController.deleteVolumeDiscount);
+
+// Скидки по типу клиента
+router.get('/loyalty-discounts', DatabasePricingController.getLoyaltyDiscounts);
+router.put('/loyalty-discounts/:customerType', DatabasePricingController.updateLoyaltyDiscount);
+
+// Расчет цены
+router.post('/calculate', DatabasePricingController.calculatePrice);
+
+export default router;
+

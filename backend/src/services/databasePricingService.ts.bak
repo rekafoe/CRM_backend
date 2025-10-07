@@ -1,0 +1,219 @@
+import { getDb } from '../db';
+
+export interface BasePrice {
+  id: number;
+  product_type: string;
+  product_variant: string;
+  urgent_price: number;
+  online_price: number;
+  promo_price: number;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface UrgencyMultiplier {
+  id: number;
+  price_type: string;
+  multiplier: number;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface VolumeDiscount {
+  id: number;
+  min_quantity: number;
+  discount_percent: number;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface LoyaltyDiscount {
+  id: number;
+  customer_type: string;
+  discount_percent: number;
+  created_at: string;
+  updated_at: string;
+}
+
+export class DatabasePricingService {
+  // Получить все базовые цены
+  static async getBasePrices(): Promise<BasePrice[]> {
+    const db = await getDb();
+    return await db.all<BasePrice>('SELECT * FROM base_prices ORDER BY product_type, product_variant');
+  }
+
+  // Получить базовую цену по типу и варианту продукта
+  static async getBasePrice(productType: string, productVariant: string): Promise<BasePrice | null> {
+    const db = await getDb();
+    return await db.get<BasePrice>(
+      'SELECT * FROM base_prices WHERE product_type = ? AND product_variant = ?',
+      [productType, productVariant]
+    );
+  }
+
+  // Обновить базовую цену
+  static async updateBasePrice(
+    productType: string, 
+    productVariant: string, 
+    prices: { urgent_price: number; online_price: number; promo_price: number }
+  ): Promise<void> {
+    const db = await getDb();
+    await db.run(
+      'UPDATE base_prices SET urgent_price = ?, online_price = ?, promo_price = ?, updated_at = CURRENT_TIMESTAMP WHERE product_type = ? AND product_variant = ?',
+      [prices.urgent_price, prices.online_price, prices.promo_price, productType, productVariant]
+    );
+  }
+
+  // Добавить новую базовую цену
+  static async addBasePrice(
+    productType: string,
+    productVariant: string,
+    prices: { urgent_price: number; online_price: number; promo_price: number }
+  ): Promise<void> {
+    const db = await getDb();
+    await db.run(
+      'INSERT INTO base_prices (product_type, product_variant, urgent_price, online_price, promo_price) VALUES (?, ?, ?, ?, ?)',
+      [productType, productVariant, prices.urgent_price, prices.online_price, prices.promo_price]
+    );
+  }
+
+  // Получить все множители срочности
+  static async getUrgencyMultipliers(): Promise<UrgencyMultiplier[]> {
+    const db = await getDb();
+    return await db.all<UrgencyMultiplier>('SELECT * FROM urgency_multipliers ORDER BY price_type');
+  }
+
+  // Обновить множитель срочности
+  static async updateUrgencyMultiplier(priceType: string, multiplier: number): Promise<void> {
+    const db = await getDb();
+    await db.run(
+      'UPDATE urgency_multipliers SET multiplier = ?, updated_at = CURRENT_TIMESTAMP WHERE price_type = ?',
+      [multiplier, priceType]
+    );
+  }
+
+  // Получить все скидки по объему
+  static async getVolumeDiscounts(): Promise<VolumeDiscount[]> {
+    const db = await getDb();
+    return await db.all<VolumeDiscount>('SELECT * FROM volume_discounts ORDER BY min_quantity');
+  }
+
+  // Обновить скидку по объему
+  static async updateVolumeDiscount(id: number, minQuantity: number, discountPercent: number): Promise<void> {
+    const db = await getDb();
+    await db.run(
+      'UPDATE volume_discounts SET min_quantity = ?, discount_percent = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?',
+      [minQuantity, discountPercent, id]
+    );
+  }
+
+  // Добавить новую скидку по объему
+  static async addVolumeDiscount(minQuantity: number, discountPercent: number): Promise<void> {
+    const db = await getDb();
+    await db.run(
+      'INSERT INTO volume_discounts (min_quantity, discount_percent) VALUES (?, ?)',
+      [minQuantity, discountPercent]
+    );
+  }
+
+  // Удалить скидку по объему
+  static async deleteVolumeDiscount(id: number): Promise<void> {
+    const db = await getDb();
+    await db.run('DELETE FROM volume_discounts WHERE id = ?', [id]);
+  }
+
+  // Получить все скидки по типу клиента
+  static async getLoyaltyDiscounts(): Promise<LoyaltyDiscount[]> {
+    const db = await getDb();
+    return await db.all<LoyaltyDiscount>('SELECT * FROM loyalty_discounts ORDER BY customer_type');
+  }
+
+  // Обновить скидку по типу клиента
+  static async updateLoyaltyDiscount(customerType: string, discountPercent: number): Promise<void> {
+    const db = await getDb();
+    await db.run(
+      'UPDATE loyalty_discounts SET discount_percent = ?, updated_at = CURRENT_TIMESTAMP WHERE customer_type = ?',
+      [discountPercent, customerType]
+    );
+  }
+
+  // Получить скидку по объему для заданного количества
+  static async getVolumeDiscountForQuantity(quantity: number): Promise<number> {
+    const db = await getDb();
+    const discount = await db.get<VolumeDiscount>(
+      'SELECT * FROM volume_discounts WHERE min_quantity <= ? ORDER BY min_quantity DESC LIMIT 1',
+      [quantity]
+    );
+    return discount ? discount.discount_percent / 100 : 0;
+  }
+
+  // Получить скидку по типу клиента
+  static async getLoyaltyDiscountForCustomerType(customerType: string): Promise<number> {
+    const db = await getDb();
+    const discount = await db.get<LoyaltyDiscount>(
+      'SELECT * FROM loyalty_discounts WHERE customer_type = ?',
+      [customerType]
+    );
+    return discount ? discount.discount_percent / 100 : 0;
+  }
+
+  // Получить множитель срочности
+  static async getUrgencyMultiplier(priceType: string): Promise<number> {
+    const db = await getDb();
+    const multiplier = await db.get<UrgencyMultiplier>(
+      'SELECT * FROM urgency_multipliers WHERE price_type = ?',
+      [priceType]
+    );
+    return multiplier ? multiplier.multiplier : 1.0;
+  }
+
+  // Рассчитать итоговую цену
+  static async calculatePrice(params: {
+    productType: string;
+    productVariant: string;
+    quantity: number;
+    priceType: 'urgent' | 'online' | 'promo';
+    customerType: 'regular' | 'vip';
+  }): Promise<{
+    basePrice: number;
+    urgencyPrice: number;
+    finalPrice: number;
+    total: number;
+    volumeDiscount: number;
+    loyaltyDiscount: number;
+  }> {
+    const { productType, productVariant, quantity, priceType, customerType } = params;
+
+    // Получаем базовую цену
+    const basePriceData = await this.getBasePrice(productType, productVariant);
+    if (!basePriceData) {
+      throw new Error(`Цена не найдена для ${productType} ${productVariant}`);
+    }
+
+    const basePrice = basePriceData[`${priceType}_price` as keyof BasePrice] as number;
+    
+    // Применяем множитель срочности
+    const urgencyMultiplier = await this.getUrgencyMultiplier(priceType);
+    const urgencyPrice = basePrice * urgencyMultiplier;
+    
+    // Применяем скидки
+    const volumeDiscount = await this.getVolumeDiscountForQuantity(quantity);
+    const loyaltyDiscount = await this.getLoyaltyDiscountForCustomerType(customerType);
+    
+    // Рассчитываем итоговую цену за штуку
+    const finalPrice = urgencyPrice * (1 - volumeDiscount) * (1 - loyaltyDiscount);
+    
+    // Итоговая стоимость
+    const total = finalPrice * quantity;
+
+    return {
+      basePrice,
+      urgencyPrice,
+      finalPrice,
+      total,
+      volumeDiscount,
+      loyaltyDiscount
+    };
+  }
+}
+

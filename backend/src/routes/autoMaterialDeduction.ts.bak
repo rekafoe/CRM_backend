@@ -1,0 +1,22 @@
+import { Router } from 'express'
+import { AutoMaterialDeductionController } from '../controllers/autoMaterialDeductionController'
+import { authenticate, asyncHandler } from '../middleware'
+
+const router = Router()
+
+// Все маршруты требуют аутентификации
+router.use(authenticate)
+
+// Автоматическое списание материалов для заказа
+router.post('/orders/:orderId/deduct', asyncHandler(AutoMaterialDeductionController.deductForOrder))
+
+// Получить историю списаний для заказа
+router.get('/orders/:orderId/history', asyncHandler(AutoMaterialDeductionController.getDeductionHistory))
+
+// Отменить списание материалов
+router.post('/orders/:orderId/cancel', asyncHandler(AutoMaterialDeductionController.cancelDeduction))
+
+// Проверить доступность материалов
+router.post('/check-availability', asyncHandler(AutoMaterialDeductionController.checkAvailability))
+
+export default router

@@ -1,0 +1,67 @@
+import { Router } from 'express';
+import { MaterialReservationController } from '../controllers/materialReservationController';
+import { getDb } from '../config/database';
+
+const router = Router();
+
+// Инициализация контроллера с базой данных
+let reservationController: MaterialReservationController | null = null;
+
+const getReservationController = async () => {
+  if (!reservationController) {
+    const database = await getDb();
+    reservationController = new MaterialReservationController(database);
+  }
+  return reservationController;
+};
+
+// Создать резервирование
+router.post('/', async (req, res) => {
+  const controller = await getReservationController();
+  await controller.createReservation(req, res);
+});
+
+// Получить все резервирования
+router.get('/', async (req, res) => {
+  const controller = await getReservationController();
+  await controller.getAllReservations(req, res);
+});
+
+// Получить резервирования по материалу
+router.get('/material/:materialId', async (req, res) => {
+  const controller = await getReservationController();
+  await controller.getReservationsByMaterial(req, res);
+});
+
+// Получить доступное количество материала
+router.get('/available/:materialId', async (req, res) => {
+  const controller = await getReservationController();
+  await controller.getAvailableQuantity(req, res);
+});
+
+// Обновить резервирование
+router.put('/:id', async (req, res) => {
+  const controller = await getReservationController();
+  await controller.updateReservation(req, res);
+});
+
+// Отменить резервирование
+router.post('/:id/cancel', async (req, res) => {
+  const controller = await getReservationController();
+  await controller.cancelReservation(req, res);
+});
+
+// Выполнить резервирование (списать со склада)
+router.post('/:id/fulfill', async (req, res) => {
+  const controller = await getReservationController();
+  await controller.fulfillReservation(req, res);
+});
+
+// Очистить истекшие резервирования
+router.post('/cleanup/expired', async (req, res) => {
+  const controller = await getReservationController();
+  await controller.cleanupExpiredReservations(req, res);
+});
+
+export default router;
+

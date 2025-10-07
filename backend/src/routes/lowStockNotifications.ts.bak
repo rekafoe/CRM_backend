@@ -1,0 +1,28 @@
+import { Router } from 'express'
+import { LowStockNotificationController } from '../controllers/lowStockNotificationController'
+import { authenticate, asyncHandler } from '../middleware'
+
+const router = Router()
+
+// Все маршруты требуют аутентификации
+router.use(authenticate)
+
+// Проверить остатки и создать уведомления
+router.post('/check', asyncHandler(LowStockNotificationController.checkStockLevels))
+
+// Получить все активные уведомления
+router.get('/alerts', asyncHandler(LowStockNotificationController.getActiveAlerts))
+
+// Отметить уведомление как решенное
+router.post('/alerts/:alertId/resolve', asyncHandler(LowStockNotificationController.resolveAlert))
+
+// Автоматически решить уведомления
+router.post('/auto-resolve', asyncHandler(LowStockNotificationController.autoResolveAlerts))
+
+// Получить статистику уведомлений
+router.get('/stats', asyncHandler(LowStockNotificationController.getAlertStats))
+
+// Запланировать проверку остатков
+router.post('/schedule', asyncHandler(LowStockNotificationController.scheduleStockCheck))
+
+export default router

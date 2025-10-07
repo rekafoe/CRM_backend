@@ -1,0 +1,153 @@
+import { Request, Response } from 'express'
+import { LowStockNotificationService } from '../services/lowStockNotificationService'
+import { logger } from '../utils/logger'
+import { AuthenticatedRequest } from '../middleware'
+
+export class LowStockNotificationController {
+  /**
+   * Проверить остатки и создать уведомления
+   */
+  static async checkStockLevels = async (req: Request, res: Response) => {
+    try {
+      const result = await LowStockNotificationService.checkStockLevels()
+      
+      res.json({
+        success: true,
+        data: result,
+        message: `Проверка завершена. Найдено уведомлений: ${result.totalAlerts}`
+      })
+    } catch (error: any) {
+      logger.error('Ошибка проверки остатков', error)
+      res.status(500).json({
+        success: false,
+        error: 'Ошибка проверки остатков материалов',
+        details: error.message
+      })
+    }
+  }
+
+  /**
+   * Получить все активные уведомления
+   */
+  static async getActiveAlerts = async (req: Request, res: Response) => {
+    try {
+      const alerts = await LowStockNotificationService.getActiveAlerts()
+      
+      res.json({
+        success: true,
+        data: alerts,
+        count: alerts.length
+      })
+    } catch (error: any) {
+      logger.error('Ошибка получения активных уведомлений', error)
+      res.status(500).json({
+        success: false,
+        error: 'Ошибка получения активных уведомлений',
+        details: error.message
+      })
+    }
+  }
+
+  /**
+   * Отметить уведомление как решенное
+   */
+  static async resolveAlert = async (req: Request, res: Response) => {
+    try {
+      const alertId = Number(req.params.alertId)
+      const authUser = (req as AuthenticatedRequest).user as { id: number } | undefined
+
+      if (!alertId || isNaN(alertId)) {
+        res.status(400).json({
+          success: false,
+          error: 'Необходимо указать корректный ID уведомления'
+        })
+        return
+      }
+
+      const success = await LowStockNotificationService.resolveAlert(alertId, authUser?.id)
+      
+      if (success) {
+        res.json({
+          success: true,
+          message: 'Уведомление отмечено как решенное'
+        })
+      } else {
+        res.status(400).json({
+          success: false,
+          error: 'Не удалось отметить уведомление как решенное'
+        })
+      }
+    } catch (error: any) {
+      logger.error('Ошибка отметки уведомления как решенного', error)
+      res.status(500).json({
+        success: false,
+        error: 'Ошибка отметки уведомления как решенного',
+        details: error.message
+      })
+    }
+  }
+
+  /**
+   * Автоматически решить уведомления
+   */
+  static async autoResolveAlerts = async (req: Request, res: Response) => {
+    try {
+      const resolvedCount = await LowStockNotificationService.autoResolveAlerts()
+      
+      res.json({
+        success: true,
+        data: { resolvedCount },
+        message: `Автоматически решено уведомлений: ${resolvedCount}`
+      })
+    } catch (error: any) {
+      logger.error('Ошибка автоматического решения уведомлений', error)
+      res.status(500).json({
+        success: false,
+        error: 'Ошибка автоматического решения уведомлений',
+        details: error.message
+      })
+    }
+  }
+
+  /**
+   * Получить статистику уведомлений
+   */
+  static async getAlertStats = async (req: Request, res: Response) => {
+    try {
+      const stats = await LowStockNotificationService.getAlertStats()
+      
+      res.json({
+        success: true,
+        data: stats
+      })
+    } catch (error: any) {
+      logger.error('Ошибка получения статистики уведомлений', error)
+      res.status(500).json({
+        success: false,
+        error: 'Ошибка получения статистики уведомлений',
+        details: error.message
+      })
+    }
+  }
+
+  /**
+   * Запланировать проверку остатков
+   */
+  static async scheduleStockCheck = async (req: Request, res: Response) => {
+    try {
+      await LowStockNotificationService.scheduleStockCheck()
+      
+      res.json({
+        success: true,
+        message: 'Проверка остатков запланирована'
+      })
+    } catch (error: any) {
+      logger.error('Ошибка планирования проверки остатков', error)
+      res.status(500).json({
+        success: false,
+        error: 'Ошибка планирования проверки остатков',
+        details: error.message
+      })
+    }
+  }
+}

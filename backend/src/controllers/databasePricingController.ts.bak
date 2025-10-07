@@ -1,0 +1,230 @@
+import { Request, Response } from 'express';
+import { DatabasePricingService } from '../services/databasePricingService';
+import { asyncHandler } from '../middleware';
+
+export class DatabasePricingController {
+  // Получить все базовые цены
+  static getBasePrices = asyncHandler(async (req: Request, res: Response) => {
+    const prices = await DatabasePricingService.getBasePrices();
+    res.json({
+      success: true,
+      data: prices
+    });
+  });
+
+  // Получить базовую цену по типу и варианту
+  static getBasePrice = asyncHandler(async (req: Request, res: Response) => {
+    const { productType, productVariant } = req.params;
+    const price = await DatabasePricingService.getBasePrice(productType, productVariant);
+    
+    if (!price) {
+      res.status(404).json({
+        success: false,
+        message: 'Цена не найдена'
+      });
+      return;
+    }
+
+    res.json({
+      success: true,
+      data: price
+    });
+  });
+
+  // Обновить базовую цену
+  static updateBasePrice = asyncHandler(async (req: Request, res: Response) => {
+    const { productType, productVariant } = req.params;
+    const { urgent_price, online_price, promo_price } = req.body;
+
+    if (!urgent_price || !online_price || !promo_price) {
+      res.status(400).json({
+        success: false,
+        message: 'Все цены обязательны'
+      });
+      return;
+    }
+
+    await DatabasePricingService.updateBasePrice(productType, productVariant, {
+      urgent_price,
+      online_price,
+      promo_price
+    });
+
+    res.json({
+      success: true,
+      message: 'Цена обновлена'
+    });
+  });
+
+  // Добавить новую базовую цену
+  static addBasePrice = asyncHandler(async (req: Request, res: Response) => {
+    const { product_type, product_variant, urgent_price, online_price, promo_price } = req.body;
+
+    if (!product_type || !product_variant || !urgent_price || !online_price || !promo_price) {
+      res.status(400).json({
+        success: false,
+        message: 'Все поля обязательны'
+      });
+      return;
+    }
+
+    await DatabasePricingService.addBasePrice(product_type, product_variant, {
+      urgent_price,
+      online_price,
+      promo_price
+    });
+
+    res.json({
+      success: true,
+      message: 'Цена добавлена'
+    });
+  });
+
+  // Получить все множители срочности
+  static getUrgencyMultipliers = asyncHandler(async (req: Request, res: Response) => {
+    const multipliers = await DatabasePricingService.getUrgencyMultipliers();
+    res.json({
+      success: true,
+      data: multipliers
+    });
+  });
+
+  // Обновить множитель срочности
+  static updateUrgencyMultiplier = asyncHandler(async (req: Request, res: Response) => {
+    const { priceType } = req.params;
+    const { multiplier } = req.body;
+
+    if (!multiplier || multiplier <= 0) {
+      res.status(400).json({
+        success: false,
+        message: 'Множитель должен быть больше 0'
+      });
+      return;
+    }
+
+    await DatabasePricingService.updateUrgencyMultiplier(priceType, multiplier);
+
+    res.json({
+      success: true,
+      message: 'Множитель обновлен'
+    });
+  });
+
+  // Получить все скидки по объему
+  static getVolumeDiscounts = asyncHandler(async (req: Request, res: Response) => {
+    const discounts = await DatabasePricingService.getVolumeDiscounts();
+    res.json({
+      success: true,
+      data: discounts
+    });
+  });
+
+  // Обновить скидку по объему
+  static updateVolumeDiscount = asyncHandler(async (req: Request, res: Response) => {
+    const { id } = req.params;
+    const { min_quantity, discount_percent } = req.body;
+
+    if (!min_quantity || !discount_percent || min_quantity < 0 || discount_percent < 0 || discount_percent > 100) {
+      res.status(400).json({
+        success: false,
+        message: 'Некорректные данные скидки'
+      });
+      return;
+    }
+
+    await DatabasePricingService.updateVolumeDiscount(Number(id), min_quantity, discount_percent);
+
+    res.json({
+      success: true,
+      message: 'Скидка обновлена'
+    });
+  });
+
+  // Добавить новую скидку по объему
+  static addVolumeDiscount = asyncHandler(async (req: Request, res: Response) => {
+    const { min_quantity, discount_percent } = req.body;
+
+    if (!min_quantity || !discount_percent || min_quantity < 0 || discount_percent < 0 || discount_percent > 100) {
+      res.status(400).json({
+        success: false,
+        message: 'Некорректные данные скидки'
+      });
+      return;
+    }
+
+    await DatabasePricingService.addVolumeDiscount(min_quantity, discount_percent);
+
+    res.json({
+      success: true,
+      message: 'Скидка добавлена'
+    });
+  });
+
+  // Удалить скидку по объему
+  static deleteVolumeDiscount = asyncHandler(async (req: Request, res: Response) => {
+    const { id } = req.params;
+    await DatabasePricingService.deleteVolumeDiscount(Number(id));
+
+    res.json({
+      success: true,
+      message: 'Скидка удалена'
+    });
+  });
+
+  // Получить все скидки по типу клиента
+  static getLoyaltyDiscounts = asyncHandler(async (req: Request, res: Response) => {
+    const discounts = await DatabasePricingService.getLoyaltyDiscounts();
+    res.json({
+      success: true,
+      data: discounts
+    });
+  });
+
+  // Обновить скидку по типу клиента
+  static updateLoyaltyDiscount = asyncHandler(async (req: Request, res: Response) => {
+    const { customerType } = req.params;
+    const { discount_percent } = req.body;
+
+    if (!discount_percent || discount_percent < 0 || discount_percent > 100) {
+      res.status(400).json({
+        success: false,
+        message: 'Некорректный процент скидки'
+      });
+      return;
+    }
+
+    await DatabasePricingService.updateLoyaltyDiscount(customerType, discount_percent);
+
+    res.json({
+      success: true,
+      message: 'Скидка обновлена'
+    });
+  });
+
+  // Рассчитать цену
+  static calculatePrice = asyncHandler(async (req: Request, res: Response) => {
+    const { productType, productVariant, quantity, priceType, customerType } = req.body;
+
+    if (!productType || !productVariant || !quantity || !priceType || !customerType) {
+      res.status(400).json({
+        success: false,
+        message: 'Все параметры обязательны'
+      });
+      return;
+    }
+
+    const result = await DatabasePricingService.calculatePrice({
+      productType,
+      productVariant,
+      quantity: Number(quantity),
+      priceType,
+      customerType
+    });
+
+    res.json({
+      success: true,
+      data: result
+    });
+  });
+}
+
