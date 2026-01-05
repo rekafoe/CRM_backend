@@ -235,6 +235,9 @@ export class AIService {
     );
   }
 
+  // ✅ АНАЛИТИКА: Расчет исторической цены для ML-предсказаний
+  // Работает с УЖЕ сохраненными ценами из истории заказов
+  // НЕ влияет на реальное ценообразование - только для рекомендаций
   private static calculateHistoricalPrice(orders: TrainingData[], params: any): number {
     if (orders.length === 0) {
       // Базовые цены если нет исторических данных
@@ -454,33 +457,16 @@ export class AIService {
 
   // Определение минимальных стоимостей заказа по форматам
   private static async getMinimumOrderCosts(): Promise<Record<string, number>> {
-    try {
-      // Пытаемся получить данные из API
-      const response = await fetch('/api/dynamic-pricing/minimum-order-costs');
-      if (response.ok) {
-        const data = await response.json();
-        if (data.success && data.data) {
-          const costs: Record<string, number> = {};
-          data.data.forEach((cost: any) => {
-            costs[cost.format] = cost.minimum_cost;
-          });
-          return costs;
-        }
-      }
-    } catch (error) {
-      logger.warn('Не удалось получить минимальные стоимости из API, используем значения по умолчанию', error);
-    }
-    
-    // Fallback значения
+    // В новой системе минимальные стоимости пока заданы статически
     return {
-      'A6': 2.50,      // Минимум 2.50 BYN для A6
-      'A5': 3.50,      // Минимум 3.50 BYN для A5  
-      'A4': 5.00,      // Минимум 5.00 BYN для A4
-      'SRA3': 8.00,    // Минимум 8.00 BYN для SRA3
-      'A3': 6.00,      // Минимум 6.00 BYN для A3
-      'A2': 10.00,     // Минимум 10.00 BYN для A2
-      'A1': 15.00,     // Минимум 15.00 BYN для A1
-      'default': 3.00  // Минимум 3.00 BYN по умолчанию
+      A6: 2.5,
+      A5: 3.5,
+      A4: 5.0,
+      SRA3: 8.0,
+      A3: 6.0,
+      A2: 10.0,
+      A1: 15.0,
+      default: 3.0,
     };
   }
 

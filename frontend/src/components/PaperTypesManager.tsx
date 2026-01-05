@@ -85,12 +85,8 @@ export const PaperTypesManager: React.FC<PaperTypesManagerProps> = ({ isOpen, on
       const response = await getPaperTypes();
       const data = response.data || response;
       
-      console.log('Загруженные данные типов бумаги:', data);
-      
       // Обрабатываем данные для правильного отображения цен
       const processedData = data.map((type: any) => {
-        console.log(`Обрабатываем тип: ${type.display_name}`, type);
-        
         // Если prices - это массив, преобразуем в объект
         let prices = {};
         if (Array.isArray(type.prices)) {
@@ -102,8 +98,6 @@ export const PaperTypesManager: React.FC<PaperTypesManagerProps> = ({ isOpen, on
           prices = type.prices;
         }
         
-        console.log(`Цены для ${type.display_name}:`, prices);
-        
         return {
           ...type,
           prices: prices
@@ -112,7 +106,7 @@ export const PaperTypesManager: React.FC<PaperTypesManagerProps> = ({ isOpen, on
       
       setPaperTypes(processedData);
     } catch (error) {
-      console.error('Ошибка загрузки типов бумаги:', error);
+      // Ошибка обрабатывается через UI
     } finally {
       setLoading(false);
     }
@@ -125,7 +119,7 @@ export const PaperTypesManager: React.FC<PaperTypesManagerProps> = ({ isOpen, on
       setNewPaperType({ name: '', display_name: '', search_keywords: '' });
       await loadPaperTypes();
     } catch (error) {
-      console.error('Ошибка создания типа бумаги:', error);
+      // Ошибка обрабатывается через UI
     }
   };
 
@@ -142,7 +136,7 @@ export const PaperTypesManager: React.FC<PaperTypesManagerProps> = ({ isOpen, on
       setEditingType(null);
       await loadPaperTypes();
     } catch (error) {
-      console.error('Ошибка обновления типа бумаги:', error);
+      // Ошибка обрабатывается через UI
     }
   };
 
@@ -153,7 +147,7 @@ export const PaperTypesManager: React.FC<PaperTypesManagerProps> = ({ isOpen, on
       await deletePaperType(id);
       await loadPaperTypes();
     } catch (error) {
-      console.error('Ошибка удаления типа бумаги:', error);
+      // Ошибка обрабатывается через UI
     }
   };
 
@@ -164,7 +158,7 @@ export const PaperTypesManager: React.FC<PaperTypesManagerProps> = ({ isOpen, on
       setNewPrice({ paper_type_id: 0, density: 0, price: 0 });
       await loadPaperTypes();
     } catch (error) {
-      console.error('Ошибка добавления цены:', error);
+      // Ошибка обрабатывается через UI
     }
   };
 
@@ -175,7 +169,7 @@ export const PaperTypesManager: React.FC<PaperTypesManagerProps> = ({ isOpen, on
       await deletePrintingPrice(priceId);
       await loadPaperTypes();
     } catch (error) {
-      console.error('Ошибка удаления цены:', error);
+      // Ошибка обрабатывается через UI
     }
   };
 
@@ -349,7 +343,6 @@ export const PaperTypesManager: React.FC<PaperTypesManagerProps> = ({ isOpen, on
                       {type.prices && Object.keys(type.prices).length > 0 ? (
                         <div className="price-grid">
                           {Object.entries(type.prices).map(([density, price]) => {
-                            console.log(`Цена для ${type.display_name} ${density}г/м²:`, price);
                             return (
                               <div key={density} className="price-item">
                                 <span>{density}г/м²</span>

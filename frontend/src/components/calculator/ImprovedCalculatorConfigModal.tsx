@@ -1,8 +1,6 @@
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
-import { productConfigs as defaultProductConfigs, printingPrices, addProduct, updatePrintingPrices, addPaperDensity, ProductConfig, updateProductConfig, deleteProductConfig } from '../../config/calculatorConfig';
+import { productConfigs as defaultProductConfigs, addProduct, ProductConfig, updateProductConfig, deleteProductConfig } from '../../config/calculatorConfig';
 import { EditProductModal } from '../EditProductModal';
-import { CalculatorSettingsTab } from './CalculatorSettingsTab';
-import { CalculatorBackupTab } from './CalculatorBackupTab';
 import { getPaperTypesFromWarehouse } from '../../services/calculatorMaterialService';
 import { useLogger } from '../../utils/logger';
 import { useToastNotifications } from '../Toast';
@@ -16,7 +14,7 @@ interface ImprovedCalculatorConfigModalProps {
   onConfigUpdate: () => void;
 }
 
-type ConfigTab = 'products' | 'create' | 'prices' | 'presets' | 'settings' | 'backup';
+type ConfigTab = 'products' | 'create' | 'presets';
 
 export const ImprovedCalculatorConfigModal: React.FC<ImprovedCalculatorConfigModalProps> = ({
   isOpen,
@@ -34,7 +32,6 @@ export const ImprovedCalculatorConfigModal: React.FC<ImprovedCalculatorConfigMod
     laminations: ['none', 'matte', 'glossy'],
     sides: [1, 2]
   });
-  const [newPrice, setNewPrice] = useState({ paperType: 'semi-matte', density: 0, price: 0 });
   const [savedPresets, setSavedPresets] = useState<any[]>([]);
   const [editingProductKey, setEditingProductKey] = useState<string | null>(null);
   const [editingProductConfig, setEditingProductConfig] = useState<ProductConfig | null>(null);
@@ -53,20 +50,13 @@ export const ImprovedCalculatorConfigModal: React.FC<ImprovedCalculatorConfigMod
   const [errors, setErrors] = useState<Record<string, string>>({});
 
   // Состояния для новых функций
-  const [settings, setSettings] = useState({
-    autoSave: true,
-    showAdvancedOptions: false,
-    defaultCurrency: 'BYN',
-    roundingPrecision: 2,
-    enableNotifications: true
-  });
+  // Настройки калькулятора больше не сохраняются локально
 
   // Загрузка данных
   useEffect(() => {
     if (isOpen) {
       loadProductConfigs();
       loadPresets();
-      loadSettings();
       loadPaperTypes();
     }
   }, [isOpen]);
@@ -108,17 +98,7 @@ export const ImprovedCalculatorConfigModal: React.FC<ImprovedCalculatorConfigMod
     }
   };
 
-  const loadSettings = () => {
-    try {
-      const saved = localStorage.getItem('calculator-settings');
-      if (saved) {
-        setSettings(JSON.parse(saved));
-        logger.info('Настройки загружены');
-      }
-    } catch (error) {
-      logger.error('Ошибка загрузки настроек', error);
-    }
-  };
+  // Удалена загрузка настроек из localStorage
 
   const loadPaperTypes = async () => {
     setLoadingStates(prev => ({ ...prev, paperTypes: true }));
@@ -160,17 +140,7 @@ export const ImprovedCalculatorConfigModal: React.FC<ImprovedCalculatorConfigMod
     return newErrors;
   };
 
-  const saveSettings = (newSettings: typeof settings) => {
-    try {
-      localStorage.setItem('calculator-settings', JSON.stringify(newSettings));
-      setSettings(newSettings);
-      logger.info('Настройки сохранены', newSettings);
-      toast.success('Настройки сохранены');
-    } catch (error) {
-      logger.error('Ошибка сохранения настроек', error);
-      toast.error('Ошибка сохранения настроек');
-    }
-  };
+  // Удалено сохранение настроек в localStorage
 
   const deletePreset = (index: number) => {
     if (window.confirm('Вы уверены, что хотите удалить этот пресет?')) {
@@ -269,17 +239,7 @@ export const ImprovedCalculatorConfigModal: React.FC<ImprovedCalculatorConfigMod
     }
   };
 
-  const handleAddPrice = () => {
-    if (newPrice.density > 0 && newPrice.price > 0) {
-      addPaperDensity(newPrice.paperType, newPrice.density, newPrice.price);
-      setNewPrice({ paperType: 'semi-matte', density: 0, price: 0 });
-      onConfigUpdate();
-      logger.info('Новая цена добавлена', newPrice);
-      toast.success('Новая цена добавлена!');
-    } else {
-      toast.error('Заполните все поля корректно');
-    }
-  };
+  // Управление ценами перенесено в склад/бэкенд
 
   const handleFormatChange = useCallback((format: string, checked: boolean) => {
     if (checked) {
@@ -328,9 +288,7 @@ export const ImprovedCalculatorConfigModal: React.FC<ImprovedCalculatorConfigMod
     try {
       const exportData = {
         productConfigs,
-        printingPrices,
         presets: savedPresets,
-        settings,
         exportDate: new Date().toISOString(),
         version: '1.0'
       };
@@ -372,10 +330,7 @@ export const ImprovedCalculatorConfigModal: React.FC<ImprovedCalculatorConfigMod
           localStorage.setItem('printing-calculator-presets', JSON.stringify(importData.presets));
         }
         
-        if (importData.settings) {
-          setSettings(importData.settings);
-          localStorage.setItem('calculator-settings', JSON.stringify(importData.settings));
-        }
+        // Поле settings более не используется
         
         onConfigUpdate();
         logger.info('Настройки импортированы', { version: importData.version });
@@ -434,13 +389,10 @@ export const ImprovedCalculatorConfigModal: React.FC<ImprovedCalculatorConfigMod
         </div>
 
         <div className="config-tabs">
-          {[
+          {[ 
             { key: 'products', label: '📦 Продукты', icon: '📦' },
             { key: 'create', label: '➕ Создать', icon: '➕' },
-            { key: 'prices', label: '💰 Цены', icon: '💰' },
-            { key: 'presets', label: '⭐ Пресеты', icon: '⭐' },
-            { key: 'settings', label: '⚙️ Настройки', icon: '⚙️' },
-            { key: 'backup', label: '💾 Резерв', icon: '💾' }
+            { key: 'presets', label: '⭐ Пресеты', icon: '⭐' }
           ].map(tab => (
             <button 
               key={tab.key}
@@ -691,76 +643,7 @@ export const ImprovedCalculatorConfigModal: React.FC<ImprovedCalculatorConfigMod
             </div>
           )}
 
-          {/* Вкладка цен */}
-          {activeTab === 'prices' && (
-            <div className="prices-tab">
-              <h3>💰 Управление ценами</h3>
-              {Object.entries(printingPrices).map(([paperType, prices]) => (
-                <div key={paperType} className="price-group">
-                  <h4>{paperType === 'semi-matte' ? 'Полуматовая (Color Copy)' : 
-                       paperType === 'glossy' ? 'Глянцевая (NEVIA)' : 
-                       paperType === 'offset' ? 'Офсетная' :
-                       paperType === 'roll' ? 'Рулонная' :
-                       paperType === 'self-adhesive' ? 'Самоклеющаяся' :
-                       paperType === 'transparent' ? 'Прозрачная' :
-                       paperType === 'magnetic' ? 'Магнитная' : paperType}</h4>
-                  <div className="price-list">
-                    {Object.entries(prices).map(([density, price]) => (
-                      <div key={density} className="price-item">
-                        <span>{density}г/м²</span>
-                        <span>{price} BYN/лист</span>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              ))}
-
-              <h3>Добавить новую цену</h3>
-              <div className="new-price-form">
-                <div className="form-group">
-                  <label>Тип бумаги:</label>
-                  <select
-                    value={newPrice.paperType}
-                    onChange={(e) => setNewPrice(prev => ({ ...prev, paperType: e.target.value }))}
-                  >
-                    <option value="semi-matte">Полуматовая (Color Copy)</option>
-                    <option value="glossy">Глянцевая (NEVIA)</option>
-                    <option value="offset">Офсетная</option>
-                    <option value="roll">Рулонная</option>
-                    <option value="self-adhesive">Самоклеющаяся</option>
-                    <option value="transparent">Прозрачная</option>
-                    <option value="magnetic">Магнитная</option>
-                  </select>
-                </div>
-
-                <div className="form-group">
-                  <label>Плотность (г/м²):</label>
-                  <input
-                    type="number"
-                    value={newPrice.density}
-                    onChange={(e) => setNewPrice(prev => ({ ...prev, density: Number(e.target.value) }))}
-                    min="50"
-                    max="500"
-                  />
-                </div>
-
-                <div className="form-group">
-                  <label>Цена (BYN/лист):</label>
-                  <input
-                    type="number"
-                    step="0.01"
-                    value={newPrice.price}
-                    onChange={(e) => setNewPrice(prev => ({ ...prev, price: Number(e.target.value) }))}
-                    min="0"
-                  />
-                </div>
-
-                <button className="btn btn-primary" onClick={handleAddPrice}>
-                  Добавить цену
-                </button>
-              </div>
-            </div>
-          )}
+          {/* Вкладка цен удалена (цены из склада/бэкенда) */}
 
           {/* Вкладка пресетов */}
           {activeTab === 'presets' && (
@@ -813,23 +696,7 @@ export const ImprovedCalculatorConfigModal: React.FC<ImprovedCalculatorConfigMod
             </div>
           )}
 
-          {/* Вкладка настроек */}
-          {activeTab === 'settings' && (
-            <CalculatorSettingsTab
-              settings={settings}
-              onSettingsChange={saveSettings}
-            />
-          )}
-
-          {/* Вкладка резервного копирования */}
-          {activeTab === 'backup' && (
-            <CalculatorBackupTab
-              productConfigs={productConfigs}
-              printingPrices={printingPrices}
-              presets={savedPresets}
-              settings={settings}
-            />
-          )}
+          {/* Вкладки settings/backup удалены */}
         </div>
 
         <div className="config-footer">

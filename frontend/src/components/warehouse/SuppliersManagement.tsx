@@ -76,7 +76,15 @@ export const SuppliersManagement: React.FC<SuppliersManagementProps> = ({
 
   // Фильтрация поставщиков
   const filteredSuppliers = useMemo(() => {
-    let filtered = suppliers;
+    // Дедупликация по id - оставляем только первое вхождение каждого id
+    const uniqueSuppliers = suppliers.reduce((acc, supplier) => {
+      if (!acc.find(s => s.id === supplier.id)) {
+        acc.push(supplier);
+      }
+      return acc;
+    }, [] as Supplier[]);
+
+    let filtered = uniqueSuppliers;
 
     // Поиск по тексту
     if (searchQuery) {
@@ -268,8 +276,8 @@ export const SuppliersManagement: React.FC<SuppliersManagementProps> = ({
               disabled={loadingFilters}
             >
               <option value="all">Все регионы</option>
-              {regions.map(region => (
-                <option key={region} value={region}>
+              {regions.map((region, index) => (
+                <option key={`region-${index}-${region}`} value={region}>
                   {region}
                 </option>
               ))}
@@ -284,8 +292,8 @@ export const SuppliersManagement: React.FC<SuppliersManagementProps> = ({
               disabled={loadingFilters}
             >
               <option value="all">Все категории</option>
-              {categories.map(category => (
-                <option key={category.id} value={category.id}>
+              {categories.map((category, index) => (
+                <option key={`category-${index}-${category.id}`} value={category.id}>
                   {category.name}
                 </option>
               ))}
@@ -309,105 +317,68 @@ export const SuppliersManagement: React.FC<SuppliersManagementProps> = ({
         </div>
       </div>
 
-      {/* Список поставщиков */}
-      <div className="suppliers-list">
-        {filteredSuppliers.map(supplier => (
-          <div 
-            key={supplier.id} 
-            className={`supplier-card ${!supplier.is_active ? 'inactive' : ''}`}
-          >
-            <div className="card-header">
-              <div className="supplier-status">
-                {supplier.is_active ? '✅' : '⏸️'}
-              </div>
-              <div className="supplier-actions">
-                <button 
-                  className="action-btn small"
-                  onClick={() => handleViewMaterials(supplier)}
-                  title="Просмотр материалов"
-                >
-                  📦
-                </button>
-                <button 
-                  className="action-btn small"
-                  onClick={() => handleViewAnalytics(supplier)}
-                  title="Аналитика поставщика"
-                >
-                  📊
-                </button>
-                <button 
-                  className="action-btn small"
-                  onClick={() => handleEdit(supplier)}
-                  title="Редактировать"
-                >
-                  ✏️
-                </button>
-                <button 
-                  className="action-btn small"
-                  onClick={() => handleToggleActive(supplier)}
-                  title={supplier.is_active ? 'Деактивировать' : 'Активировать'}
-                >
-                  {supplier.is_active ? '⏸️' : '▶️'}
-                </button>
-                <button 
-                  className="action-btn small danger"
-                  onClick={() => handleDelete(supplier)}
-                  title="Удалить"
-                >
-                  🗑️
-                </button>
-              </div>
-            </div>
-
-            <div className="card-content">
-              <h3>{supplier.name}</h3>
-              <div className="supplier-contact">
-                <div className="contact-item">
-                  <span className="contact-label">Контактное лицо:</span>
-                  <span className="contact-value">{supplier.contact}</span>
-                </div>
-                {supplier.email && (
-                  <div className="contact-item">
-                    <span className="contact-label">Email:</span>
-                    <span className="contact-value">
-                      <a href={`mailto:${supplier.email}`}>{supplier.email}</a>
-                    </span>
+      {/* Таблица поставщиков */}
+      <div className="suppliers-table-wrapper">
+        <table className="suppliers-table">
+          <thead>
+            <tr>
+              <th>ID</th>
+              <th>Статус</th>
+              <th>Название</th>
+              <th>Контакт</th>
+              <th>Телефон</th>
+              <th>Email</th>
+              <th>Адрес</th>
+              <th>Создан</th>
+              <th>Обновлен</th>
+              <th>Действия</th>
+            </tr>
+          </thead>
+          <tbody>
+            {filteredSuppliers.map(supplier => (
+              <tr key={supplier.id} className={!supplier.is_active ? 'row-inactive' : ''}>
+                <td>{supplier.id}</td>
+                <td>{supplier.is_active ? '✅' : '⏸️'}</td>
+                <td style={{ textAlign: 'left' }}>{supplier.name}</td>
+                <td style={{ textAlign: 'left' }}>{supplier.contact || '—'}</td>
+                <td>{supplier.phone ? (<a href={`tel:${supplier.phone}`}>{supplier.phone}</a>) : '—'}</td>
+                <td>{supplier.email ? (<a href={`mailto:${supplier.email}`}>{supplier.email}</a>) : '—'}</td>
+                <td style={{ textAlign: 'left' }}>{supplier.address || '—'}</td>
+                <td>{new Date(supplier.created_at).toLocaleDateString()}</td>
+                <td>{new Date(supplier.updated_at).toLocaleDateString()}</td>
+                <td>
+                  <div className="supplier-actions inline">
+                    <button 
+                      className="action-btn small"
+                      onClick={() => handleViewMaterials(supplier)}
+                      title="Материалы"
+                    >📦</button>
+                    <button 
+                      className="action-btn small"
+                      onClick={() => handleViewAnalytics(supplier)}
+                      title="Аналитика"
+                    >📊</button>
+                    <button 
+                      className="action-btn small"
+                      onClick={() => handleEdit(supplier)}
+                      title="Редактировать"
+                    >✏️</button>
+                    <button 
+                      className="action-btn small"
+                      onClick={() => handleToggleActive(supplier)}
+                      title={supplier.is_active ? 'Деактивировать' : 'Активировать'}
+                    >{supplier.is_active ? '⏸️' : '▶️'}</button>
+                    <button 
+                      className="action-btn small danger"
+                      onClick={() => handleDelete(supplier)}
+                      title="Удалить"
+                    >🗑️</button>
                   </div>
-                )}
-                {supplier.phone && (
-                  <div className="contact-item">
-                    <span className="contact-label">Телефон:</span>
-                    <span className="contact-value">
-                      <a href={`tel:${supplier.phone}`}>{supplier.phone}</a>
-                    </span>
-                  </div>
-                )}
-                {supplier.address && (
-                  <div className="contact-item">
-                    <span className="contact-label">Адрес:</span>
-                    <span className="contact-value">{supplier.address}</span>
-                  </div>
-                )}
-              </div>
-              
-              {supplier.notes && (
-                <div className="supplier-notes">
-                  <strong>Примечания:</strong>
-                  <p>{supplier.notes}</p>
-                </div>
-              )}
-
-              <div className="supplier-meta">
-                <span className="meta-item">
-                  Создан: {new Date(supplier.created_at).toLocaleDateString()}
-                </span>
-                <span className="meta-item">
-                  Обновлен: {new Date(supplier.updated_at).toLocaleDateString()}
-                </span>
-              </div>
-            </div>
-          </div>
-        ))}
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
       </div>
 
       {/* Пустое состояние */}

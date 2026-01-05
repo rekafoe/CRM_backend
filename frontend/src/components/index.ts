@@ -15,7 +15,6 @@ export type { ToastType } from './common/ImprovedToast';
 // ============================================
 // ГЛАВНЫЙ КАЛЬКУЛЯТОР (Используйте этот!)
 // ============================================
-export { MainCalculator, Calculator, PricingCalculator } from './calculator/MainCalculator';
 export { ImprovedPrintingCalculatorModal } from './calculator/ImprovedPrintingCalculatorModal';
 
 // ============================================
@@ -33,11 +32,3 @@ export { default as MaterialAvailability } from './warehouse/MaterialAvailabilit
 // ============================================
 export { OrdersManagement } from './orders/OrdersManagement';
 
-// ============================================
-// DEPRECATED (Не используйте! Оставлено для совместимости)
-// ============================================
-// Эти компоненты устарели и будут удалены в следующей версии
-export { PrintingCalculatorModal } from './PrintingCalculatorModal';
-export { RefactoredCalculatorModal } from './calculator/RefactoredCalculatorModal';
-// export { default as FlyersCalculatorModal } from './FlyersCalculatorModal'; // MOVED TO ARCHIVE
-export { CalculatorConfigModal } from './CalculatorConfigModal';

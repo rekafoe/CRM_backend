@@ -29,19 +29,11 @@ export const VALIDATION = {
   MAX_PASSWORD_LENGTH: 100,
 } as const;
 
-// Форматы бумаги
-export const PAPER_FORMATS = {
-  A6: { width: 105, height: 148, label: 'A6 (105×148 мм)' },
-  A5: { width: 148, height: 210, label: 'A5 (148×210 мм)' },
-  A4: { width: 210, height: 297, label: 'A4 (210×297 мм)' },
-  A3: { width: 297, height: 420, label: 'A3 (297×420 мм)' },
-  A2: { width: 420, height: 594, label: 'A2 (420×594 мм)' },
-  A1: { width: 594, height: 841, label: 'A1 (594×841 мм)' },
-  SRA3: { width: 320, height: 450, label: 'SRA3 (320×450 мм)' },
-} as const;
+// Форматы бумаги загружаются динамически из складского сервиса
+// Стандартные форматы ISO (A4, A5, A6 и т.д.) определяются в formatUtils.ts
 
-// Плотности бумаги
-export const PAPER_DENSITIES = [80, 90, 100, 115, 130, 150, 170, 200, 250, 300, 350] as const;
+// Плотности бумаги загружаются динамически из складского сервиса
+// Используйте: getPaperTypesFromWarehouse() из calculatorMaterialService
 
 // Статусы заказов
 export const ORDER_STATUSES = {

@@ -1,15 +1,22 @@
 import React, { useState } from 'react';
 import { Routes, Route, Navigate, useNavigate } from 'react-router-dom';
-import { AdminTopPanel } from '../components/admin/AdminTopPanel';
-import { CalculatorSettingsPage } from './CalculatorSettingsPage';
+import ProductManagementPage from './admin/ProductManagementPage';
+import ProductTemplatePage from '../features/productTemplate/ProductTemplatePage';
+import ProductTechProcessPage from './admin/ProductTechProcessPage';
+import ProductEditPage from './admin/ProductEditPage';
 import { AdminReportsPage } from './AdminReportsPage';
 import { ReportsPage } from './admin/ReportsPage';
 import { WarehousePage } from './admin/WarehousePage';
 import { PricingPage } from './admin/PricingPage';
+import PrintersPage from './admin/PrintersPage';
 import { SettingsPage } from './admin/SettingsPage';
-import { PriceManagementPage } from '../components/admin/PriceManagementPage';
+import { UserManagement } from '../features/userManagement';
+import { AdminProductManager } from '../components/calculator/AdminProductManager';
+import CalculatorProductManager from '../components/admin/CalculatorProductManager';
 import { NotificationsManager } from '../components/notifications/NotificationsManager';
+import AdminDashboard from '../components/admin/AdminDashboard';
 import { DailyActivityOverview } from '../components/admin/DailyActivityOverview';
+import SystemFeaturesPanel from '../components/admin/SystemFeaturesPanel';
 import { useCurrentUser } from '../hooks/useCurrentUser';
 import { useMaterials } from '../api/hooks/useMaterials';
 import { useOrders } from '../api/hooks/useOrders';
@@ -40,7 +47,7 @@ const AdminPanelHome: React.FC = () => {
   const { data: orders } = useOrders();
   const [showNotificationsManager, setShowNotificationsManager] = useState(false);
 
-  const lowStockCount = materials?.filter(m => m.quantity < 10).length || 0;
+  const lowStockCount = materials?.filter((m: any) => m.quantity < 10).length || 0;
   const totalOrders = orders?.length || 0;
   const totalRevenue = orders?.reduce((sum, order) => sum + (order.total || 0), 0) || 0;
 
@@ -96,14 +103,20 @@ const AdminPanelHome: React.FC = () => {
           <button onClick={() => navigate('/adminpanel/reports')} className="nav-btn">
             📊 Отчеты
           </button>
-          <button onClick={() => navigate('/adminpanel/calculator-settings')} className="nav-btn">
-            🧮 Калькулятор
+          <button onClick={() => navigate('/adminpanel/products')} className="nav-btn">
+            🧩 Продукты калькулятора
           </button>
           <button onClick={() => navigate('/adminpanel/pricing')} className="nav-btn">
             💰 Ценообразование
           </button>
-          <button onClick={() => navigate('/adminpanel/price-management')} className="nav-btn">
-            📈 Управление ценами
+          <button onClick={() => navigate('/adminpanel/printers')} className="nav-btn">
+            🖨️ Принтеры
+          </button>
+          <button onClick={() => navigate('/adminpanel/pricing-admin')} className="nav-btn">
+            🔧 Настройка операций
+          </button>
+          <button onClick={() => navigate('/adminpanel/users')} className="nav-btn">
+            👥 Пользователи
           </button>
           <button onClick={() => navigate('/adminpanel/settings')} className="nav-btn">
             ⚙️ Настройки
@@ -143,9 +156,10 @@ const AdminPanelHome: React.FC = () => {
               <span className="link-desc">Аналитика и отчеты</span>
             </button>
             
+            {/* Ссылка устарела, ведем на продукты */}
             <button 
               className="admin-link-card"
-              onClick={() => navigate('/adminpanel/calculator-settings')}
+              onClick={() => navigate('/adminpanel/products')}
             >
               <span className="link-icon">🧮</span>
               <span className="link-title">Калькулятор</span>
@@ -170,6 +184,11 @@ const AdminPanelHome: React.FC = () => {
               <span className="link-desc">Управление всеми уведомлениями системы</span>
             </button>
           </div>
+        </div>
+
+        {/* Панель модулей системы */}
+        <div className="system-features-section">
+          <SystemFeaturesPanel />
         </div>
       </div>
       
@@ -206,17 +225,27 @@ export const AdminPanelPage: React.FC = () => {
         
         {/* Ценообразование */}
         <Route path="/pricing" element={<PricingPage onBack={() => window.history.back()} />} />
+        <Route path="/pricing-admin" element={<AdminDashboard />} />
         <Route path="/discounts" element={<PricingPage onBack={() => window.history.back()} />} />
-        <Route path="/price-management" element={<PriceManagementPage />} />
+        <Route path="/printers" element={<PrintersPage />} />
         
         {/* Настройки */}
         <Route path="/settings" element={<SettingsPage onBack={() => window.history.back()} />} />
-        <Route path="/calculator-settings" element={<CalculatorSettingsPage onBack={() => window.history.back()} />} />
+        <Route path="/users" element={<UserManagement onBack={() => window.history.back()} />} />
+        {/* Устаревший маршрут настроек калькулятора → редирект на продукты */}
+        <Route path="/calculator-settings" element={<Navigate to="/adminpanel/products" replace />} />
+        {/* Переключаем продукты на новую страницу управления продуктами */}
+        <Route path="/products" element={<ProductManagementPage />} />
+        <Route path="/products/:id/edit" element={<ProductEditPage />} />
+        {/* Новые внутренние редакторы */}
+        <Route path="/products/:id/template" element={<ProductTemplatePage />} />
+        <Route path="/products/:id/tech-process" element={<ProductTechProcessPage />} />
+        <Route path="/products-old" element={<AdminProductManager />} />
         <Route path="/backup" element={<SettingsPage onBack={() => window.history.back()} />} />
         
         {/* Пользователи и заказы */}
-        <Route path="/users" element={<SettingsPage onBack={() => window.history.back()} />} />
-        <Route path="/roles" element={<SettingsPage onBack={() => window.history.back()} />} />
+        <Route path="/users" element={<UserManagement onBack={() => window.history.back()} />} />
+        <Route path="/roles" element={<UserManagement onBack={() => window.history.back()} />} />
         <Route path="/all-orders" element={<ReportsPage onBack={() => window.history.back()} />} />
         <Route path="/order-templates" element={<SettingsPage onBack={() => window.history.back()} />} />
         

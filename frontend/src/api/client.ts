@@ -41,8 +41,18 @@ apiClient.interceptors.response.use(
 
 // Типизированные методы для HTTP запросов
 export const api = {
-  get: <T>(url: string, params?: any) => 
-    apiClient.get<T>(url, { params }),
+  get: <T>(url: string, paramsOrConfig?: any) => {
+    // Если передан объект с params (конфиг axios), используем его
+    if (paramsOrConfig && typeof paramsOrConfig === 'object' && 'params' in paramsOrConfig) {
+      return apiClient.get<T>(url, paramsOrConfig);
+    }
+    // Если передан простой объект - это query параметры
+    if (paramsOrConfig && typeof paramsOrConfig === 'object') {
+      return apiClient.get<T>(url, { params: paramsOrConfig });
+    }
+    // Иначе обычный запрос
+    return apiClient.get<T>(url);
+  },
   
   post: <T>(url: string, data?: any) => 
     apiClient.post<T>(url, data),

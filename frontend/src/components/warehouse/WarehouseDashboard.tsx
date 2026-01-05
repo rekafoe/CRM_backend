@@ -28,7 +28,7 @@ export const WarehouseDashboard: React.FC<WarehouseDashboardProps> = ({ onClose 
   const [selectedMaterials, setSelectedMaterials] = useState<number[]>([]);
   const [showFilters, setShowFilters] = useState(false);
   
-  const { data: materials, isLoading, error, refetch } = useMaterials();
+  const { data: materials, isLoading, error, refetch } = useMaterials({});
   const { showToast } = useUIStore();
   const { materials: storeMaterials, setMaterials } = useMaterialStore();
 
@@ -77,7 +77,15 @@ export const WarehouseDashboard: React.FC<WarehouseDashboardProps> = ({ onClose 
   const filteredMaterials = useMemo(() => {
     if (!materials) return [];
     
-    let filtered = materials;
+    // Дедупликация по id - оставляем только первое вхождение каждого id
+    const uniqueMaterials = materials.reduce((acc, material) => {
+      if (!acc.find(m => m.id === material.id)) {
+        acc.push(material);
+      }
+      return acc;
+    }, [] as Material[]);
+    
+    let filtered = uniqueMaterials;
     
     if (searchQuery) {
       filtered = filtered.filter(m => 
@@ -139,7 +147,6 @@ export const WarehouseDashboard: React.FC<WarehouseDashboardProps> = ({ onClose 
       title: 'Материалы',
       icon: '📦',
       description: 'Управление материалами и остатками',
-      count: warehouseStats.totalMaterials,
       color: '#4CAF50'
     },
     {
@@ -147,7 +154,6 @@ export const WarehouseDashboard: React.FC<WarehouseDashboardProps> = ({ onClose 
       title: 'Типы бумаги',
       icon: '📄',
       description: 'Управление типами бумаги и ценами',
-      count: 0, // Будет обновлено позже
       color: '#E91E63'
     },
     {
@@ -155,7 +161,6 @@ export const WarehouseDashboard: React.FC<WarehouseDashboardProps> = ({ onClose 
       title: 'Инвентарь',
       icon: '📋',
       description: 'Учет и контроль инвентаря',
-      count: warehouseStats.alerts,
       color: '#2196F3'
     },
     {
@@ -163,7 +168,6 @@ export const WarehouseDashboard: React.FC<WarehouseDashboardProps> = ({ onClose 
       title: 'Поставщики',
       icon: '🏭',
       description: 'Управление поставщиками',
-      count: warehouseStats.suppliers,
       color: '#FF9800'
     },
     {
@@ -171,7 +175,6 @@ export const WarehouseDashboard: React.FC<WarehouseDashboardProps> = ({ onClose 
       title: 'Категории',
       icon: '🏷️',
       description: 'Категории материалов',
-      count: warehouseStats.categories,
       color: '#9C27B0'
     },
     {
@@ -179,7 +182,6 @@ export const WarehouseDashboard: React.FC<WarehouseDashboardProps> = ({ onClose 
       title: 'Отчеты',
       icon: '📊',
       description: 'Аналитика и отчетность',
-      count: 0,
       color: '#607D8B'
     },
     {
@@ -187,7 +189,6 @@ export const WarehouseDashboard: React.FC<WarehouseDashboardProps> = ({ onClose 
       title: 'Настройки',
       icon: '⚙️',
       description: 'Конфигурация склада',
-      count: 0,
       color: '#795548'
     }
   ];

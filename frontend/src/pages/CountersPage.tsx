@@ -112,7 +112,7 @@ export const CountersPage: React.FC = () => {
       // Рассчитываем сумму из заказов за день
       const ordersResponse = await api.get('/orders');
       const ordersForDate = ordersResponse.data.filter((order: any) => {
-        const orderDate = new Date(order.createdAt).toISOString().split('T')[0];
+        const orderDate = new Date(order.created_at).toISOString().split('T')[0];
         return orderDate === selectedDate && (order.userId === user.id || order.userId === null);
       });
       const calculatedCash = ordersForDate.reduce((sum: number, order: any) => {

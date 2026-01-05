@@ -49,7 +49,8 @@
 }
 
 .action-btn.primary {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: var(--bg-secondary);
+  border: 1px solid var(--accent-primary);
   color: white;
 }
 
@@ -129,7 +130,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  background: linear-gradient(135deg, #f8f9fa, #e9ecef);
+  background: var(--bg-secondary);
   border-radius: 12px;
 }
 
@@ -486,7 +487,7 @@
 }
 
 .materials-table tr.selected {
-  background: linear-gradient(135deg, rgba(102, 126, 234, 0.05), rgba(118, 75, 162, 0.05));
+  background: var(--bg-hover);
 }
 
 .status-badge {
@@ -619,7 +620,8 @@
 
 .skeleton-header {
   height: 60px;
-  background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+  background: var(--bg-tertiary);
+  border: 1px solid var(--border-color);
   background-size: 200% 100%;
   animation: loading 1.5s infinite;
   border-radius: 8px;
@@ -635,7 +637,8 @@
 
 .skeleton-stats > div {
   height: 80px;
-  background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+  background: var(--bg-tertiary);
+  border: 1px solid var(--border-color);
   background-size: 200% 100%;
   animation: loading 1.5s infinite;
   border-radius: 8px;
@@ -643,7 +646,8 @@
 
 .skeleton-content {
   height: 200px;
-  background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+  background: var(--bg-tertiary);
+  border: 1px solid var(--border-color);
   background-size: 200% 100%;
   animation: loading 1.5s infinite;
   border-radius: 8px;

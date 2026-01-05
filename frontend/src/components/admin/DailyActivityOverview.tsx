@@ -78,7 +78,7 @@ export const DailyActivityOverview: React.FC<DailyActivityOverviewProps> = ({
       }
       
       setActivities(activities);
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Error loading daily activities:', error);
       setError('Ошибка при загрузке данных');
     } finally {
@@ -200,7 +200,7 @@ export const DailyActivityOverview: React.FC<DailyActivityOverviewProps> = ({
                   </div>
                   <div className="text-sm">
                     <span className="text-gray-600">Выручка:</span>
-                    <span className="ml-2 font-medium">{activity.totalRevenue.toLocaleString()} ₽</span>
+                    <span className="ml-2 font-medium">{activity.totalRevenue.toLocaleString()} BYN</span>
                   </div>
                 </div>
                 <div className="space-y-2">

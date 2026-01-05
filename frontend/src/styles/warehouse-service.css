@@ -12,7 +12,8 @@
   padding: 8px 16px;
   border: 1px solid rgba(255, 255, 255, 0.35);
   border-radius: 8px;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: var(--bg-secondary);
+  border: 1px solid var(--accent-primary);
   color: #fff;
   font-size: 14px;
   font-weight: 500;
@@ -22,13 +23,13 @@
 }
 
 .warehouse-service-toggle-btn:hover {
-  background: linear-gradient(135deg, #5a6fd8 0%, #6a4190 100%);
+  background: var(--accent-primary);
   transform: translateY(-1px);
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
 }
 
 .warehouse-service-toggle-btn.active {
-  background: linear-gradient(135deg, #4a5bc8 0%, #5a3190 100%);
+  background: var(--accent-secondary);
   box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
 }
 
@@ -36,7 +37,7 @@
   position: absolute;
   top: -6px;
   right: -6px;
-  background: linear-gradient(135deg, #ff6b6b, #ee5a52);
+  background: var(--error);
   color: white;
   border-radius: 50%;
   width: 20px;
@@ -82,7 +83,8 @@
 }
 
 .warehouse-service-header {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: var(--bg-secondary);
+  border: 1px solid var(--accent-primary);
   color: white;
   padding: 20px;
   text-align: center;
@@ -145,14 +147,14 @@
 
 .warehouse-section-btn:hover {
   border-color: var(--section-color, #667eea);
-  background: linear-gradient(135deg, rgba(102, 126, 234, 0.05), rgba(118, 75, 162, 0.05));
+  background: var(--bg-hover);
   transform: translateY(-2px);
   box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1);
 }
 
 .warehouse-section-btn.active {
   border-color: var(--section-color, #667eea);
-  background: linear-gradient(135deg, rgba(102, 126, 234, 0.1), rgba(118, 75, 162, 0.1));
+  background: var(--bg-tertiary);
   box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
 }
 
@@ -163,7 +165,8 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  background: linear-gradient(135deg, var(--section-color, #667eea), var(--section-color, #764ba2));
+  background: var(--bg-secondary);
+  border: 1px solid var(--accent-primary);
   border-radius: 10px;
   color: white;
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);

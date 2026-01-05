@@ -616,7 +616,7 @@ export const OrdersManagement: React.FC<OrdersManagementProps> = ({
                   </div>
                   
                   <div className="order-date">
-                    {new Date(order.createdAt).toLocaleDateString('ru-RU')}
+                    {new Date(order.created_at).toLocaleDateString('ru-RU')}
                   </div>
                   
                   <div className="order-amount">

@@ -1,6 +1,6 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { AIService, AIModelMetrics, PricePrediction, ProductRecommendation } from '../../services/aiService';
-import { logger } from '../../utils/logger';
+import { useLogger } from '../../utils/logger';
 import { useToastNotifications } from '../Toast';
 import './AIDashboard.css';
 
@@ -16,6 +16,9 @@ export const AIDashboard: React.FC<AIDashboardProps> = ({
   onApplyRecommendation
 }) => {
   const toast = useToastNotifications();
+  const log = useLogger('AIDashboard');
+  const toastRef = useRef(toast);
+  useEffect(() => { toastRef.current = toast; }, [toast]);
   
   const [activeTab, setActiveTab] = useState<'overview' | 'predictions' | 'recommendations' | 'training'>('overview');
   const [modelMetrics, setModelMetrics] = useState<AIModelMetrics | null>(null);
@@ -30,14 +33,14 @@ export const AIDashboard: React.FC<AIDashboardProps> = ({
       setLoading(true);
       const metrics = AIService.getModelMetrics();
       setModelMetrics(metrics);
-      logger.info('Метрики ИИ модели загружены', { metrics });
+      log.info('Метрики ИИ модели загружены');
     } catch (error) {
-      logger.error('Ошибка загрузки метрик ИИ', error);
-      toast.error('Ошибка загрузки метрик модели');
+      log.error('Ошибка загрузки метрик ИИ');
+      toastRef.current.error('Ошибка загрузки метрик модели');
     } finally {
       setLoading(false);
     }
-  }, [logger, toast]);
+  }, []);
 
   // Переобучение модели
   const handleRetrainModel = useCallback(async () => {
@@ -45,42 +48,47 @@ export const AIDashboard: React.FC<AIDashboardProps> = ({
       setRetraining(true);
       const newMetrics = AIService.retrainModel();
       setModelMetrics(newMetrics);
-      toast.success('Модель успешно переобучена');
-      logger.info('Модель ИИ переобучена', { metrics: newMetrics });
+      toastRef.current.success('Модель успешно переобучена');
+      log.info('Модель ИИ переобучена');
     } catch (error) {
-      logger.error('Ошибка переобучения модели ИИ', error);
-      toast.error('Ошибка переобучения модели');
+      log.error('Ошибка переобучения модели ИИ');
+      toastRef.current.error('Ошибка переобучения модели');
     } finally {
       setRetraining(false);
     }
-  }, [logger, toast]);
+  }, []);
 
   // Генерация рекомендаций
   const generateRecommendations = useCallback(async (budget: number, quantity: number) => {
     try {
       setLoading(true);
-      const recs = AIService.getOptimalRecommendations({
+      const recs = await AIService.getOptimalRecommendations({
         budget,
         quantity,
         urgency: 'standard',
         quality: 'standard'
       });
       setRecommendations(recs);
-      logger.info('Рекомендации ИИ сгенерированы', { count: recs.length });
+      log.info('Рекомендации ИИ сгенерированы');
     } catch (error) {
-      logger.error('Ошибка генерации рекомендаций ИИ', error);
-      toast.error('Ошибка генерации рекомендаций');
+      log.error('Ошибка генерации рекомендаций ИИ');
+      toastRef.current.error('Ошибка генерации рекомендаций');
     } finally {
       setLoading(false);
     }
-  }, [logger, toast]);
+  }, []);
 
   // Загрузка данных при открытии
+  const didLoadRef = useRef(false);
   useEffect(() => {
-    if (isOpen) {
+    if (isOpen && !didLoadRef.current) {
+      didLoadRef.current = true;
       loadModelMetrics();
     }
-  }, [isOpen, loadModelMetrics]);
+    if (!isOpen) {
+      didLoadRef.current = false;
+    }
+  }, [isOpen]);
 
   if (!isOpen) return null;
 
@@ -287,8 +295,8 @@ const PredictionsTab: React.FC<{
     customerType: 'regular'
   });
 
-  const handleTestPrediction = () => {
-    const prediction = AIService.predictPrice(testParams);
+  const handleTestPrediction = async () => {
+    const prediction = await AIService.predictPrice(testParams);
     onGenerate([prediction]);
   };
 

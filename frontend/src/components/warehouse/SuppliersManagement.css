@@ -234,14 +234,54 @@
 }
 
 /* Список поставщиков */
-.suppliers-list {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-  gap: 8px;
+/* Табличный режим */
+.suppliers-table-wrapper {
   flex: 1;
-  overflow-y: auto;
-  padding-right: 2px;
-  align-content: start;
+  overflow: auto;
+}
+
+.suppliers-table {
+  width: 100%;
+  border-collapse: collapse;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-color);
+  border-radius: 6px;
+}
+
+.suppliers-table th,
+.suppliers-table td {
+  padding: 10px 12px;
+  border-bottom: 1px solid var(--border-color);
+  border-right: 1px solid var(--border-color);
+  text-align: center;
+  font-size: 13px;
+}
+
+.suppliers-table th {
+  background: var(--bg-tertiary);
+  font-weight: 600;
+  text-transform: uppercase;
+  font-size: 12px;
+  color: var(--text-secondary);
+}
+
+.suppliers-table th:last-child,
+.suppliers-table td:last-child {
+  border-right: none;
+}
+
+.suppliers-table tbody tr:hover {
+  background: var(--bg-hover);
+}
+
+.row-inactive {
+  opacity: 0.7;
+}
+
+.supplier-actions.inline {
+  display: flex;
+  gap: 4px;
+  justify-content: center;
 }
 
 .supplier-card {

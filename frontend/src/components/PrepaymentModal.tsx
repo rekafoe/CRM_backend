@@ -6,9 +6,10 @@ interface PrepaymentModalProps {
   orderId: number;
   orderNumber: string;
   currentAmount?: number;
-  currentPaymentMethod?: 'online' | 'offline';
+  currentPaymentMethod?: 'online' | 'offline' | 'telegram';
   currentEmail?: string;
-  onPrepaymentCreated: (amount: number, email: string, paymentMethod: 'online' | 'offline') => void;
+  totalOrderAmount?: number; // Общая сумма заказа для валидации
+  onPrepaymentCreated: (amount: number, email: string, paymentMethod: 'online' | 'offline' | 'telegram') => void;
 }
 
 export const PrepaymentModal: React.FC<PrepaymentModalProps> = ({
@@ -19,13 +20,14 @@ export const PrepaymentModal: React.FC<PrepaymentModalProps> = ({
   currentAmount = 0,
   currentPaymentMethod = 'online',
   currentEmail = '',
+  totalOrderAmount = 0,
   onPrepaymentCreated
 }) => {
   if (!isOpen) return null;
   
   const [amount, setAmount] = useState<string>(currentAmount.toString());
   const [email, setEmail] = useState<string>(currentEmail);
-  const [paymentMethod, setPaymentMethod] = useState<'online' | 'offline'>(currentPaymentMethod);
+  const [paymentMethod, setPaymentMethod] = useState<'online' | 'offline' | 'telegram'>(currentPaymentMethod || 'online');
   const [isLoading, setIsLoading] = useState(false);
 
   // Вычисляем amountNum для использования в JSX
@@ -44,6 +46,12 @@ export const PrepaymentModal: React.FC<PrepaymentModalProps> = ({
     // Для онлайн предоплаты email обязателен
     if (paymentMethod === 'online' && !email) {
       alert('Для онлайн предоплаты необходимо указать email клиента');
+      return;
+    }
+
+    // Проверяем, что предоплата не больше общей суммы заказа
+    if (totalOrderAmount > 0 && amountNum > totalOrderAmount) {
+      alert(`Предоплата не может быть больше общей суммы заказа (${totalOrderAmount.toLocaleString()} BYN)`);
       return;
     }
 

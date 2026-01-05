@@ -4,3 +4,5 @@ src/**/*.js
 # Ignore source maps
 *.map
 
+.env
+

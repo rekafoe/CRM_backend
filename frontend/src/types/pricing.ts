@@ -1,3 +1,37 @@
+export type PricingServiceType = 'print' | 'postprint' | 'other' | 'generic' | string;
+
+export interface PricingService {
+  id: number;
+  name: string;
+  type: PricingServiceType;
+  unit: string;
+  rate: number;
+  isActive: boolean;
+}
+
+export interface ServiceVolumeTier {
+  id: number;
+  serviceId: number;
+  minQuantity: number;
+  rate: number;
+  isActive: boolean;
+}
+
+export interface ServiceVolumeTierPayload {
+  minQuantity: number;
+  rate: number;
+  isActive?: boolean;
+}
+
+export interface CreatePricingServicePayload {
+  name: string;
+  type: PricingServiceType;
+  unit: string;
+  rate: number;
+  isActive?: boolean;
+}
+
+export interface UpdatePricingServicePayload extends Partial<CreatePricingServicePayload> {}
 // Типы для политики ценообразования
 
 export interface PricingTier {

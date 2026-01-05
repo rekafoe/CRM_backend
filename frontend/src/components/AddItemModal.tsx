@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { PresetCategory, MaterialRow, Item, Order } from '../types';
-import { addOrderItem, getProductMaterials, getPresets, getPrinters } from '../api';
+import { addOrderItem, getProductMaterials, getPresets, getPrinters, getPrintTechnologies } from '../api';
 import axios from 'axios';
 // import FlyersCalculatorModal from './FlyersCalculatorModal'; // MOVED TO ARCHIVE
 import type { Printer } from '../types';
@@ -24,6 +24,8 @@ export default function AddItemModal({ order, onSave, onClose, initialCategory, 
   const [ok, setOk] = useState(true);
   const [customComponents, setCustomComponents] = useState<Array<{ materialId: number; qtyPerItem: number }>>([]);
   const [printers, setPrinters] = useState<Printer[]>([]);
+  const [printTechnologies, setPrintTechnologies] = useState<Array<{ code: string; name: string; pricing_mode: string }>>([]);
+  const [printTech, setPrintTech] = useState<string>('');
   const [printerId, setPrinterId] = useState<number | ''>('');
   const [sides, setSides] = useState(1);
   const [sheets, setSheets] = useState(0);
@@ -44,6 +46,7 @@ export default function AddItemModal({ order, onSave, onClose, initialCategory, 
         if (cat) setCategory(cat)
       }
     });
+    getPrintTechnologies().then(r => setPrintTechnologies(r.data || [])).catch(() => setPrintTechnologies([]));
     getPrinters().then(r => setPrinters(r.data));
     if (product && category) {
       getProductMaterials(category.category, product.description).then(res => {
@@ -52,6 +55,10 @@ export default function AddItemModal({ order, onSave, onClose, initialCategory, 
       });
     }
   }, [product, category, quantity]);
+
+  const filteredPrinters = printTech
+    ? printers.filter(p => (p.technology_code || '') === printTech)
+    : printers;
 
   async function handleSave() {
     if (!product || !category) return;
@@ -79,7 +86,7 @@ export default function AddItemModal({ order, onSave, onClose, initialCategory, 
         } catch {}
       }
     }
-    const params = { description: product.description } as any;
+    const params = { description: product.description, printTechnology: printTech || undefined } as any;
     const item: Omit<Item, 'id'> = {
       type: category.category,
       params,
@@ -219,10 +226,19 @@ export default function AddItemModal({ order, onSave, onClose, initialCategory, 
           </p>
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
             <label>
+              Тип печати:
+              <select value={printTech} onChange={e => setPrintTech(e.target.value)}>
+                <option value="">Не выбран</option>
+                {printTechnologies.map(t => (
+                  <option key={t.code} value={t.code}>{t.name}</option>
+                ))}
+              </select>
+            </label>
+            <label>
               Принтер:
               <select value={printerId} onChange={e => setPrinterId(e.target.value ? Number(e.target.value) : '')}>
                 <option value="">Не выбран</option>
-                {printers.map(p => (
+                {filteredPrinters.map(p => (
                   <option key={p.id} value={p.id}>{p.name}</option>
                 ))}
               </select>

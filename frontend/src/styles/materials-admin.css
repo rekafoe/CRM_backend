@@ -311,7 +311,8 @@
 
 .skeleton-material-card {
   height: 200px;
-  background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+  background: var(--bg-tertiary);
+  border: 1px solid var(--border-color);
   background-size: 200% 100%;
   animation: skeleton-loading 1.5s infinite;
   border-radius: 12px;

@@ -151,7 +151,7 @@
   align-items: center;
   gap: 24px;
   padding: 32px;
-  background: linear-gradient(135deg, #f8f9fa, #e9ecef);
+  background: var(--bg-secondary);
   border-bottom: 3px solid #dee2e6;
   flex-shrink: 0;
   box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
@@ -191,7 +191,7 @@
 
 .warehouse-stats .stat-card.success {
   border-color: #28a745;
-  background: linear-gradient(135deg, #d4edda 0%, #c3e6cb 50%, #b8dacc 100%);
+  background: var(--bg-success);
   position: relative;
 }
 
@@ -207,7 +207,7 @@
   left: 0;
   right: 0;
   height: 4px;
-  background: linear-gradient(90deg, #28a745, #20c997);
+  background: var(--success);
 }
 
 .warehouse-stats .stat-card.success:hover {
@@ -217,7 +217,7 @@
 
 .warehouse-stats .stat-card.warning {
   border-color: #ffc107;
-  background: linear-gradient(135deg, #fff3cd 0%, #ffeaa7 50%, #fdd835 100%);
+  background: var(--bg-warning);
   position: relative;
 }
 
@@ -233,7 +233,7 @@
   left: 0;
   right: 0;
   height: 4px;
-  background: linear-gradient(90deg, #ffc107, #ff9800);
+  background: var(--warning);
 }
 
 .warehouse-stats .stat-card.warning:hover {
@@ -243,7 +243,7 @@
 
 .warehouse-stats .stat-card.danger {
   border-color: #dc3545;
-  background: linear-gradient(135deg, #f8d7da 0%, #f5c6cb 50%, #f1aeb5 100%);
+  background: var(--bg-error);
   position: relative;
 }
 
@@ -259,7 +259,7 @@
   left: 0;
   right: 0;
   height: 4px;
-  background: linear-gradient(90deg, #dc3545, #e74c3c);
+  background: var(--error);
 }
 
 .warehouse-stats .stat-card.danger:hover {
@@ -286,7 +286,7 @@
 
 .warehouse-stats .stat-card.info {
   border-color: #17a2b8;
-  background: linear-gradient(135deg, #d1ecf1, #bee5eb);
+  background: var(--bg-info);
 }
 
 /* Уникальные стили для иконок статистики склада */
@@ -786,7 +786,7 @@
 }
 
 .materials-table tr.selected {
-  background: linear-gradient(135deg, rgba(102, 126, 234, 0.05), rgba(118, 75, 162, 0.05));
+  background: var(--bg-hover);
 }
 
 .material-name strong {

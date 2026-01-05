@@ -1,102 +1,120 @@
-/* CSS переменные для темной и светлой темы */
+/* CSS переменные для темной и светлой темы - MONOCHROME DESIGN */
 :root {
-  /* Светлая тема (по умолчанию) */
+  /* Светлая тема (по умолчанию) - монохромная палитра */
   --bg-primary: #ffffff;
-  --bg-secondary: #f5f5f5;
-  --bg-tertiary: #e0e0e0;
-  --text-primary: #212121;
-  --text-secondary: #757575;
-  --text-disabled: #bdbdbd;
-  --border-color: #e0e0e0;
+  --bg-secondary: #f8f9fa;
+  --bg-tertiary: #e9ecef;
+  --bg-hover: #f1f3f4;
+  --text-primary: #212529;
+  --text-secondary: #6c757d;
+  --text-disabled: #adb5bd;
+  --text-muted: #868e96;
+  --border-color: #dee2e6;
+  --border-light: #f8f9fa;
   --shadow: rgba(0, 0, 0, 0.1);
-  --accent-primary: #1976d2;
-  --accent-secondary: #42a5f5;
-  --success: #4caf50;
-  --warning: #ff9800;
-  --error: #f44336;
-  --info: #2196f3;
-  
-  /* Расширенные цвета для состояний */
-  --success-light: #e8f5e8;
-  --success-border: #4caf50;
-  --warning-light: #fff4e5;
-  --warning-border: #ffcc80;
-  --error-light: #ffebee;
-  --error-border: #f44336;
-  --info-light: #e3f2fd;
-  --info-border: #2196f3;
-  
+  --shadow-light: rgba(0, 0, 0, 0.05);
+
+  /* Монохромные акценты */
+  --accent-primary: #495057;
+  --accent-secondary: #6c757d;
+  --accent-light: #adb5bd;
+  --accent-dark: #343a40;
+
+  /* Монохромные состояния */
+  --success: #6c757d;
+  --warning: #868e96;
+  --error: #495057;
+  --info: #6c757d;
+
+  /* Расширенные цвета для состояний - монохромные */
+  --success-light: #f8f9fa;
+  --success-border: #dee2e6;
+  --warning-light: #f8f9fa;
+  --warning-border: #dee2e6;
+  --error-light: #f8f9fa;
+  --error-border: #dee2e6;
+  --info-light: #f8f9fa;
+  --info-border: #dee2e6;
+
   /* Цвета для текста */
-  --text-muted: #666666;
-  --text-light: #555555;
-  --text-lighter: #888888;
-  
+  --text-light: #6c757d;
+  --text-lighter: #adb5bd;
+
   /* Цвета для фонов */
-  --bg-warning: #fff4e5;
-  --bg-success: #e8f5e8;
-  --bg-error: #ffebee;
-  --bg-info: #e3f2fd;
-  
+  --bg-warning: #f8f9fa;
+  --bg-success: #f8f9fa;
+  --bg-error: #f8f9fa;
+  --bg-info: #f8f9fa;
+
   /* Цвета для границ */
-  --border-warning: #ffcc80;
-  --border-success: #4caf50;
-  --border-error: #f44336;
-  --border-info: #2196f3;
-  
-  /* Цвета для изменений цен */
-  --price-increase: #e53e3e;
-  --price-decrease: #38a169;
-  --price-neutral: #718096;
+  --border-warning: #dee2e6;
+  --border-success: #dee2e6;
+  --border-error: #dee2e6;
+  --border-info: #dee2e6;
+
+  /* Цвета для изменений цен - монохромные */
+  --price-increase: #495057;
+  --price-decrease: #6c757d;
+  --price-neutral: #adb5bd;
 }
 
 [data-theme="dark"] {
-  /* Темная тема */
-  --bg-primary: #1a1a1a;
-  --bg-secondary: #2d2d2d;
-  --bg-tertiary: #404040;
+  /* Темная тема - монохромная палитра */
+  --bg-primary: #121212;
+  --bg-secondary: #1e1e1e;
+  --bg-tertiary: #2a2a2a;
+  --bg-hover: #1a1a1a;
   --text-primary: #ffffff;
   --text-secondary: #b0b0b0;
   --text-disabled: #666666;
-  --border-color: #404040;
+  --text-muted: #888888;
+  --border-color: #333333;
+  --border-light: #1e1e1e;
   --shadow: rgba(0, 0, 0, 0.3);
-  --accent-primary: #42a5f5;
-  --accent-secondary: #64b5f6;
-  --success: #66bb6a;
-  --warning: #ffb74d;
-  --error: #ef5350;
-  --info: #42a5f5;
-  
-  /* Расширенные цвета для состояний (темная тема) */
-  --success-light: #1b5e20;
-  --success-border: #66bb6a;
-  --warning-light: #e65100;
-  --warning-border: #ffb74d;
-  --error-light: #b71c1c;
-  --error-border: #ef5350;
-  --info-light: #0d47a1;
-  --info-border: #42a5f5;
-  
+  --shadow-light: rgba(0, 0, 0, 0.2);
+
+  /* Монохромные акценты (темная тема) */
+  --accent-primary: #b0b0b0;
+  --accent-secondary: #888888;
+  --accent-light: #666666;
+  --accent-dark: #cccccc;
+
+  /* Монохромные состояния (темная тема) */
+  --success: #b0b0b0;
+  --warning: #888888;
+  --error: #b0b0b0;
+  --info: #b0b0b0;
+
+  /* Расширенные цвета для состояний (темная тема) - монохромные */
+  --success-light: #1e1e1e;
+  --success-border: #333333;
+  --warning-light: #1e1e1e;
+  --warning-border: #333333;
+  --error-light: #1e1e1e;
+  --error-border: #333333;
+  --info-light: #1e1e1e;
+  --info-border: #333333;
+
   /* Цвета для текста (темная тема) */
-  --text-muted: #b0b0b0;
-  --text-light: #cccccc;
-  --text-lighter: #999999;
-  
+  --text-light: #b0b0b0;
+  --text-lighter: #888888;
+
   /* Цвета для фонов (темная тема) */
-  --bg-warning: #e65100;
-  --bg-success: #1b5e20;
-  --bg-error: #b71c1c;
-  --bg-info: #0d47a1;
-  
+  --bg-warning: #1e1e1e;
+  --bg-success: #1e1e1e;
+  --bg-error: #1e1e1e;
+  --bg-info: #1e1e1e;
+
   /* Цвета для границ (темная тема) */
-  --border-warning: #ffb74d;
-  --border-success: #66bb6a;
-  --border-error: #ef5350;
-  --border-info: #42a5f5;
-  
-  /* Цвета для изменений цен (темная тема) */
-  --price-increase: #ff6b6b;
-  --price-decrease: #51cf66;
-  --price-neutral: #adb5bd;
+  --border-warning: #333333;
+  --border-success: #333333;
+  --border-error: #333333;
+  --border-info: #333333;
+
+  /* Цвета для изменений цен (темная тема) - монохромные */
+  --price-increase: #b0b0b0;
+  --price-decrease: #888888;
+  --price-neutral: #666666;
 }
 
 /* Базовые стили с использованием CSS переменных */
@@ -157,7 +175,7 @@ body {
   background-color: var(--bg-primary);
   border-color: var(--accent-primary);
   color: var(--text-primary);
-  box-shadow: 0 0 0 0.2rem rgba(66, 165, 245, 0.25);
+  box-shadow: 0 0 0 0.2rem rgba(108, 117, 125, 0.25);
 }
 
 /* Стили для таблиц */

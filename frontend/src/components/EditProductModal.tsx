@@ -35,7 +35,7 @@ export const EditProductModal: React.FC<EditProductModalProps> = ({
       const paperTypes = await getPaperTypesFromWarehouse();
       setWarehousePaperTypes(paperTypes);
     } catch (error) {
-      console.error('Ошибка загрузки типов бумаги:', error);
+      // Ошибка обрабатывается через UI
     } finally {
       setLoadingPaperTypes(false);
     }
@@ -223,22 +223,42 @@ export const EditProductModal: React.FC<EditProductModalProps> = ({
           </div>
 
           <div className="form-group">
-            <label>Плотности бумаги (г/м²) - статичные:</label>
-            <div className="checkbox-group">
-              {[80, 90, 100, 120, 130, 150, 200, 250, 300, 350].map(density => (
-                <label key={density} className="checkbox-label">
-                  <input
-                    type="checkbox"
-                    checked={editingData.paperDensities?.includes(density) || false}
-                    onChange={(e) => handlePaperDensityChange(density, e.target.checked)}
-                  />
-                  {density}
-                </label>
-              ))}
-            </div>
-            <small className="form-text text-muted">
-              ⚠️ Эти плотности будут заменены на динамические из складского сервиса
-            </small>
+            <label>Плотности бумаги (г/м²):</label>
+            {loadingPaperTypes ? (
+              <div className="loading-state">Загрузка плотностей...</div>
+            ) : (
+              <div className="checkbox-group">
+                {(() => {
+                  // Получаем все уникальные плотности из типов бумаги со склада
+                  const allDensities = new Set<number>();
+                  warehousePaperTypes.forEach(paperType => {
+                    if (paperType.densities && Array.isArray(paperType.densities)) {
+                      paperType.densities.forEach((d: any) => {
+                        if (d.value && typeof d.value === 'number') {
+                          allDensities.add(d.value);
+                        }
+                      });
+                    }
+                  });
+                  const sortedDensities = Array.from(allDensities).sort((a, b) => a - b);
+                  
+                  return sortedDensities.length > 0 ? (
+                    sortedDensities.map(density => (
+                      <label key={density} className="checkbox-label">
+                        <input
+                          type="checkbox"
+                          checked={editingData.paperDensities?.includes(density) || false}
+                          onChange={(e) => handlePaperDensityChange(density, e.target.checked)}
+                        />
+                        {density} г/м²
+                      </label>
+                    ))
+                  ) : (
+                    <div className="text-muted">Нет доступных плотностей. Добавьте материалы на склад.</div>
+                  );
+                })()}
+              </div>
+            )}
           </div>
 
           <div className="form-group">

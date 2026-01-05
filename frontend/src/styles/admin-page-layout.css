@@ -1,18 +1,20 @@
 /* Базовые стили для админ страниц */
+.admin-page,
 .admin-page-layout {
   min-height: 100vh;
   background: #f8f9fa;
-  padding: 0;
-  margin: 0;
+  padding: 0 !important;
+  margin: 0 !important;
+  width: 100%;
 }
 
 .admin-page-header {
   background: white;
-  padding: 20px 30px;
+  padding: 12px 16px;
   border-bottom: 1px solid #e0e0e0;
   display: flex;
   align-items: center;
-  gap: 20px;
+  gap: 12px;
   position: sticky;
   top: 0;
   z-index: 100;
@@ -20,12 +22,18 @@
 
 .admin-page-header h1 {
   margin: 0;
-  font-size: 28px;
+  font-size: 20px;
   font-weight: 700;
-  color: #2d3748;
+  color: #0f172a;
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 8px;
+}
+
+.admin-page-header p {
+  margin: 0;
+  font-size: 13px;
+  color: #64748b;
 }
 
 .back-btn {
@@ -46,34 +54,32 @@
 }
 
 .admin-page-content {
-  padding: 30px;
-  max-width: 1400px;
-  margin: 0 auto;
-  background: white;
-  border: 1px solid #e0e0e0;
-  border-radius: 4px;
-  margin-top: 20px;
-  margin-bottom: 20px;
-  min-height: calc(100vh - 200px);
+  padding: 0;
+  max-width: 100% !important;
+  margin: 0 !important;
+  background: transparent;
+  border: none;
+  border-radius: 0;
+  min-height: calc(100vh - 100px);
+  width: 100%;
 }
 
 /* Адаптивность */
 @media (max-width: 768px) {
   .admin-page-header {
-    padding: 15px 20px;
+    padding: 10px 12px;
     flex-direction: column;
     align-items: flex-start;
-    gap: 15px;
+    gap: 8px;
   }
   
   .admin-page-header h1 {
-    font-size: 24px;
+    font-size: 18px;
   }
   
   .admin-page-content {
-    padding: 20px;
-    margin: 10px;
-    border-radius: 15px;
+    padding: 0;
+    margin: 0;
   }
 }
 

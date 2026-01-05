@@ -14,7 +14,7 @@ interface OrderTotalProps {
   taxRate?: number | string;
   prepaymentAmount?: number;
   prepaymentStatus?: string;
-  paymentMethod?: 'online' | 'offline';
+  paymentMethod?: 'online' | 'offline' | 'telegram';
 }
 
 // Форматер для BYN (до сотых)
@@ -33,7 +33,9 @@ export const OrderTotal: React.FC<OrderTotalProps> = ({
   prepaymentStatus,
   paymentMethod,
 }) => {
-  // Приводим все входящие к числам
+  // ✅ ПРАВИЛЬНО: Суммируем УЖЕ рассчитанные цены из БД
+  // item.price рассчитан бэкендом и сохранен при создании позиции
+  // Здесь мы просто СУММИРУЕМ (аналог SQL SUM(price * quantity))
   const subtotal = React.useMemo(() => {
     return items.reduce((sum, item) => {
       const price = Number(item.price) || 0;
@@ -43,6 +45,9 @@ export const OrderTotal: React.FC<OrderTotalProps> = ({
     }, 0);
   }, [items]);
 
+  // ⚠️ ВНИМАНИЕ: discount и taxRate применяются на фронте!
+  // В текущей реализации всегда передается 0, но если понадобится применять скидки/налоги,
+  // они должны рассчитываться на БЭКЕНДЕ и сохраняться в БД (order.discount, order.tax)
   const disc = Number(discount) || 0;
   const rate = Number(taxRate) || 0;
 

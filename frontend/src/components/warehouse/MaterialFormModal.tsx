@@ -21,8 +21,7 @@ export const MaterialFormModal: React.FC<MaterialFormModalProps> = ({
   onClose,
   onSave
 }) => {
-
-  const [formData, setFormData] = useState<Partial<Material>>({
+  const [formData, setFormData] = useState<Partial<Material> & { finish?: string }>({
     name: '',
     description: '',
     category_id: undefined, // Изменяем на undefined, чтобы пользователь выбрал категорию
@@ -38,7 +37,9 @@ export const MaterialFormModal: React.FC<MaterialFormModalProps> = ({
     sku: '',
     notes: '',
     is_active: true,
-    paper_type_id: undefined // 🆕 Добавляем поле для связи с типом бумаги
+    paper_type_id: undefined, // 🆕 Добавляем поле для связи с типом бумаги
+    density: undefined, // 🆕 Добавляем поле плотности
+    finish: '' // 🆕 Отделка (для ламинации)
   });
 
   // 🆕 Состояние для типов бумаги
@@ -52,13 +53,31 @@ export const MaterialFormModal: React.FC<MaterialFormModalProps> = ({
   // 🆕 Состояние для категорий
   const [categories, setCategories] = useState<{id: number, name: string}[]>([]);
   const [loadingCategories, setLoadingCategories] = useState(false);
+  const selectedCategory = React.useMemo(
+    () => categories.find((c) => c.id === formData.category_id),
+    [categories, formData.category_id]
+  );
+  const isLamination = React.useMemo(() => {
+    if (!selectedCategory) return false;
+    const name = selectedCategory.name.toLowerCase();
+    // Показываем ламинационные поля как минимум для категорий, содержащих "лам" или "пленк"
+    return name.includes('лам') || name.includes('пленк');
+  }, [selectedCategory]);
 
   // 🆕 Загрузка типов бумаги
   const loadPaperTypes = async () => {
     try {
       setLoadingPaperTypes(true);
       const response = await api.get('/paper-types');
-      setPaperTypes(response.data || []);
+      const data = response.data || [];
+      // Дедупликация по id
+      const uniquePaperTypes = data.reduce((acc: PaperType[], paperType: PaperType) => {
+        if (!acc.find(pt => pt.id === paperType.id)) {
+          acc.push(paperType);
+        }
+        return acc;
+      }, []);
+      setPaperTypes(uniquePaperTypes);
     } catch (error) {
       console.error('Ошибка загрузки типов бумаги:', error);
       setPaperTypes([]);
@@ -72,7 +91,15 @@ export const MaterialFormModal: React.FC<MaterialFormModalProps> = ({
     try {
       setLoadingSuppliers(true);
       const response = await api.get('/suppliers');
-      setSuppliers(response.data || []);
+      const data = response.data || [];
+      // Дедупликация по id
+      const uniqueSuppliers = data.reduce((acc: {id: number, name: string}[], supplier: {id: number, name: string}) => {
+        if (!acc.find(s => s.id === supplier.id)) {
+          acc.push(supplier);
+        }
+        return acc;
+      }, []);
+      setSuppliers(uniqueSuppliers);
     } catch (error) {
       console.error('Ошибка загрузки поставщиков:', error);
       setSuppliers([]);
@@ -86,7 +113,15 @@ export const MaterialFormModal: React.FC<MaterialFormModalProps> = ({
     try {
       setLoadingCategories(true);
       const response = await api.get('/material-categories');
-      setCategories(response.data || []);
+      const data = response.data || [];
+      // Дедупликация по id
+      const uniqueCategories = data.reduce((acc: {id: number, name: string}[], category: {id: number, name: string}) => {
+        if (!acc.find(c => c.id === category.id)) {
+          acc.push(category);
+        }
+        return acc;
+      }, []);
+      setCategories(uniqueCategories);
     } catch (error) {
       console.error('Ошибка загрузки категорий:', error);
       setCategories([]);
@@ -123,7 +158,31 @@ export const MaterialFormModal: React.FC<MaterialFormModalProps> = ({
         sku: material.sku || '',
         notes: material.notes || '',
         is_active: material.is_active !== undefined ? material.is_active : true,
-        paper_type_id: (material as any).paper_type_id || undefined // 🆕 Добавляем поле типа бумаги
+        paper_type_id: (material as any).paper_type_id || undefined, // 🆕 Добавляем поле типа бумаги
+        density: (material as any).density || undefined, // 🆕 Добавляем поле плотности
+        finish: (material as any).finish || '' // 🆕 Отделка (для ламинации)
+      });
+    } else {
+      // При создании нового материала сбрасываем форму
+      setFormData({
+        name: '',
+        description: '',
+        category_id: undefined,
+        quantity: 0,
+        unit: 'шт',
+        price: 0,
+        sheet_price_single: 0,
+        supplier_id: undefined,
+        min_stock_level: 0,
+        max_stock_level: 100,
+        location: '',
+        barcode: '',
+        sku: '',
+        notes: '',
+        is_active: true,
+        paper_type_id: undefined,
+        density: undefined,
+        finish: ''
       });
     }
   }, [material]);
@@ -187,8 +246,8 @@ export const MaterialFormModal: React.FC<MaterialFormModalProps> = ({
                 disabled={loadingCategories}
               >
                 <option value="">Выберите категорию</option>
-                {categories.map(category => (
-                  <option key={category.id} value={category.id}>
+                {categories.map((category, index) => (
+                  <option key={`category-${category.id}-${index}`} value={category.id}>
                     {category.name}
                   </option>
                 ))}
@@ -213,8 +272,8 @@ export const MaterialFormModal: React.FC<MaterialFormModalProps> = ({
             </div>
           </div>
 
-          {/* 🆕 Условный селектор типов бумаги */}
-          {formData.category_id && (
+          {/* Поля для бумаги */}
+          {!isLamination && (
             <div className="form-row">
               <div className="form-group">
                 <label>Тип бумаги</label>
@@ -223,9 +282,9 @@ export const MaterialFormModal: React.FC<MaterialFormModalProps> = ({
                   onChange={(e) => handleChange('paper_type_id', e.target.value ? parseInt(e.target.value) : undefined)}
                   disabled={loadingPaperTypes}
                 >
-                  <option value="">Выберите тип бумаги</option>
-                  {paperTypes.map(paperType => (
-                    <option key={paperType.id} value={paperType.id}>
+                  <option value="">Выберите тип бумаги (опционально)</option>
+                  {paperTypes.map((paperType, index) => (
+                    <option key={`papertype-${paperType.id}-${index}`} value={paperType.id}>
                       {paperType.display_name}
                     </option>
                   ))}
@@ -241,13 +300,55 @@ export const MaterialFormModal: React.FC<MaterialFormModalProps> = ({
                 <input
                   type="number"
                   value={(formData as any).density || ''}
-                  onChange={(e) => handleChange('density' as any, e.target.value ? parseInt(e.target.value) : undefined)}
+                  onChange={(e) => {
+                    const value = e.target.value;
+                    handleChange('density' as any, value ? parseInt(value) : undefined);
+                  }}
                   placeholder="120, 150, 200..."
                   min="50"
                   max="500"
+                  step="1"
                 />
                 <small style={{ color: '#666', fontSize: '12px' }}>
                   Укажите плотность бумаги для точного сопоставления с калькулятором
+                </small>
+              </div>
+            </div>
+          )}
+
+          {/* Поля для ламинации */}
+          {isLamination && (
+            <div className="form-row">
+              <div className="form-group">
+                <label>Тип ламинации</label>
+                <select
+                  value={(formData as any).finish || ''}
+                  onChange={(e) => handleChange('finish' as any, e.target.value || '')}
+                >
+                  <option value="">Выберите тип ламинации</option>
+                  <option value="Глянцевая">Глянцевая</option>
+                  <option value="Матовая">Матовая</option>
+                  <option value="Софт-тач">Софт-тач</option>
+                  <option value="Антискретч">Антискретч</option>
+                  <option value="UV">UV</option>
+                </select>
+              </div>
+              <div className="form-group">
+                <label>Толщина пленки (мк)</label>
+                <input
+                  type="number"
+                  value={(formData as any).density || ''}
+                  onChange={(e) => {
+                    const value = e.target.value;
+                    handleChange('density' as any, value ? parseInt(value) : undefined);
+                  }}
+                  placeholder="25, 32, 42..."
+                  min="10"
+                  max="250"
+                  step="1"
+                />
+                <small style={{ color: '#666', fontSize: '12px' }}>
+                  Используем поле толщины для ламинации (в микронах)
                 </small>
               </div>
             </div>
@@ -344,8 +445,8 @@ export const MaterialFormModal: React.FC<MaterialFormModalProps> = ({
                 disabled={loadingSuppliers}
               >
                 <option value="">Выберите поставщика</option>
-                {suppliers.map(supplier => (
-                  <option key={supplier.id} value={supplier.id}>
+                {suppliers.map((supplier, index) => (
+                  <option key={`supplier-${supplier.id}-${index}`} value={supplier.id}>
                     {supplier.name}
                   </option>
                 ))}

@@ -322,7 +322,7 @@ export const ReportDetailPage: React.FC<ReportDetailPageProps> = ({
                     <div>Клиент: <strong>{order.customerName}</strong></div>
                     <div>Телефон: <strong>{order.customerPhone}</strong></div>
                     <div>Email: <strong>{order.customerEmail}</strong></div>
-                    <div>Создан: <strong>{new Date(order.createdAt).toLocaleString('ru-RU')}</strong></div>
+                    <div>Создан: <strong>{new Date(order.created_at).toLocaleString('ru-RU')}</strong></div>
                     <div>Сумма: <strong>{orderTotal.toLocaleString('ru-RU')} BYN</strong></div>
                     {order.prepaymentAmount && order.prepaymentAmount > 0 && (
                       <div>Предоплата: <strong>{order.prepaymentAmount} BYN</strong></div>
@@ -350,6 +350,7 @@ export const ReportDetailPage: React.FC<ReportDetailPageProps> = ({
                         key={item.id}
                         item={item}
                         orderId={order.id}
+                        order={order}
                         onUpdate={loadReportData}
                       />
                     ))}

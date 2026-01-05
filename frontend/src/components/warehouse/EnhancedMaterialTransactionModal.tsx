@@ -96,22 +96,17 @@ export const EnhancedMaterialTransactionModal: React.FC<EnhancedMaterialTransact
 
       // Подготавливаем данные для API
       const transactionData = {
-        material_id: material.id,
+        materialId: material.id,
         delta: transactionType === 'out' ? -quantity : quantity,
         reason: formData.reason,
-        notes: formData.notes,
-        supplier_id: formData.supplier_id ? parseInt(formData.supplier_id) : undefined,
-        delivery_number: formData.delivery_number || undefined,
-        invoice_number: formData.invoice_number || undefined,
-        delivery_date: formData.delivery_date || undefined,
-        delivery_notes: formData.delivery_notes || undefined
+        orderId: formData.orderId ? parseInt(formData.orderId) : undefined
       };
 
       console.log('=== ОТПРАВКА ТРАНЗАКЦИИ ===');
       console.log('transactionData:', transactionData);
 
       // Отправляем транзакцию
-      await api.post('/api/materials/transactions', transactionData);
+      await api.post('/materials/spend', transactionData);
 
       onSuccess();
       onClose();

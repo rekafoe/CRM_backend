@@ -113,7 +113,7 @@ export const OrderPool: React.FC<OrderPoolProps> = ({
   };
 
   const formatAmount = (amount: number) => {
-    return `${(amount / 100).toFixed(0)} руб.`;
+    return `${(amount / 100).toFixed(0)} Br`;
   };
 
   if (loading) {
@@ -196,7 +196,7 @@ export const OrderPool: React.FC<OrderPoolProps> = ({
                         <strong>Сумма:</strong> {formatAmount(order.totalAmount)}
                       </div>
                       <div className="text-sm text-gray-600">
-                        <strong>Создан:</strong> {formatDate(order.createdAt)}
+                        <strong>Создан:</strong> {formatDate(order.created_at)}
                       </div>
                     </div>
                     <div className="ml-4">
@@ -253,7 +253,7 @@ export const OrderPool: React.FC<OrderPoolProps> = ({
                         <strong>Сумма:</strong> {formatAmount(order.totalAmount)}
                       </div>
                       <div className="text-sm text-gray-600">
-                        <strong>Создан:</strong> {formatDate(order.createdAt)}
+                        <strong>Создан:</strong> {formatDate(order.created_at)}
                       </div>
                     </div>
                   </div>

@@ -10,12 +10,14 @@
 
 import { api } from '../api/client';
 import { Material } from '../types/shared';
+import { logger } from '../utils/logger';
 
 export interface CalculatorMaterial extends Material {
   // Дополнительные поля для калькулятора
   available_for_calculator: boolean;
   estimated_cost_per_sheet?: number;
   recommended_for_products?: string[]; // ['flyers', 'business_cards']
+  category_name?: string;
 }
 
 export interface PaperTypeForCalculator {
@@ -84,7 +86,7 @@ export async function getPaperDensitiesForType(paperType: string): Promise<Array
     const densities = type?.densities || [];
     return densities;
   } catch (error) {
-    console.error('Ошибка получения плотностей для типа бумаги:', error);
+    logger.error('calculatorMaterialService', 'Ошибка получения плотностей для типа бумаги', error);
     return [];
   }
 }
@@ -95,6 +97,7 @@ export async function getPaperDensitiesForType(paperType: string): Promise<Array
 // Кэш для предотвращения повторных запросов
 let paperTypesCache: PaperTypeForCalculator[] | null = null;
 let cacheTimestamp: number = 0;
+let lastCacheHitLogTs: number = 0; // throttle cache-hit logs
 const CACHE_DURATION = 30000; // 30 секунд
 
 // Кэш для материалов
@@ -106,7 +109,10 @@ export async function getPaperTypesFromWarehouse(): Promise<PaperTypeForCalculat
     // Проверяем кэш
     const now = Date.now();
     if (paperTypesCache && (now - cacheTimestamp) < CACHE_DURATION) {
-      console.log('📄 Используем кэшированные типы бумаги:', paperTypesCache.length);
+      if (now - lastCacheHitLogTs > 10000) { // логируем не чаще, чем раз в 10 секунд
+        logger.debug('calculatorMaterialService', 'Используем кэшированные типы бумаги', { count: paperTypesCache.length });
+        lastCacheHitLogTs = now;
+      }
       return paperTypesCache;
     }
 
@@ -114,7 +120,7 @@ export async function getPaperTypesFromWarehouse(): Promise<PaperTypeForCalculat
     const paperTypesResponse = await api.get('/paper-types');
     const paperTypes = paperTypesResponse.data as any[];
 
-    console.log('📄 Получены типы бумаги с материалами:', paperTypes.length);
+    logger.info('calculatorMaterialService', 'Получены типы бумаги с материалами', { count: paperTypes.length });
 
     // Преобразуем данные для калькулятора
     const result: PaperTypeForCalculator[] = paperTypes.map((paperType: any) => {
@@ -162,7 +168,7 @@ export async function getPaperTypesFromWarehouse(): Promise<PaperTypeForCalculat
 
     return result;
   } catch (error) {
-    console.error('Ошибка загрузки типов бумаги из склада:', error);
+    logger.error('calculatorMaterialService', 'Ошибка загрузки типов бумаги из склада', error);
     return [];
   }
 }
@@ -197,7 +203,18 @@ export async function getMaterialsForCalculator(): Promise<CalculatorMaterial[]>
 
     return calculatorMaterials;
   } catch (error) {
-    console.error('Ошибка загрузки материалов для калькулятора:', error);
+    logger.error('calculatorMaterialService', 'Ошибка загрузки материалов для калькулятора', error);
+    return [];
+  }
+}
+
+// Полный список материалов со склада (без фильтрации)
+export async function getAllWarehouseMaterials(): Promise<Material[]> {
+  try {
+    const response = await api.get('/materials');
+    return response.data as Material[];
+  } catch (error) {
+    logger.error('calculatorMaterialService', 'Ошибка загрузки всех материалов склада', error);
     return [];
   }
 }
@@ -267,7 +284,7 @@ export async function checkMaterialAvailability(
         : `Недостаточно материала. Доступно: ${availableQuantity} листов, требуется: ${sheetsNeeded}`
     };
   } catch (error) {
-    console.error('Ошибка проверки доступности материалов:', error);
+    logger.error('calculatorMaterialService', 'Ошибка проверки доступности материалов', error);
     return {
       available: false,
       available_quantity: 0,
@@ -278,7 +295,11 @@ export async function checkMaterialAvailability(
 }
 
 /**
- * Рассчитать стоимость материалов для заказа
+ * ⚠️ ТОЛЬКО ДЛЯ ПРЕДПРОСМОТРА В UI!
+ * Рассчитывает ПРИМЕРНУЮ стоимость материалов для отображения в интерфейсе выбора
+ * 
+ * НЕ ИСПОЛЬЗУЕТСЯ для финального расчета цены!
+ * Финальный расчет происходит ТОЛЬКО на бэкенде через FlexiblePricingService
  */
 export async function calculateMaterialCost(
   paperType: string,
@@ -316,13 +337,14 @@ export async function calculateMaterialCost(
     }
 
     // Рассчитываем количество листов
+    // ⚠️ ПРИМЕРНЫЙ расчет для UI-подсказки, НЕ для финальной цены!
     const sheetsPerItem = 1 / 2; // Примерно 2 изделия на лист SRA3
     const sheetsNeeded = Math.ceil(quantity * sheetsPerItem);
     
     // Учитываем двустороннюю печать
     const sidesMultiplier = sides === 2 ? 1.6 : 1.0;
     
-    // Стоимость материалов
+    // Стоимость материалов (ТОЛЬКО ДЛЯ ОТОБРАЖЕНИЯ В UI!)
     const pricePerSheet = selectedDensity.price * selectedPaperType.price_multiplier;
     const materialCost = sheetsNeeded * pricePerSheet * sidesMultiplier;
 
@@ -333,7 +355,7 @@ export async function calculateMaterialCost(
       material_id: selectedDensity.material_id
     };
   } catch (error) {
-    console.error('Ошибка расчета стоимости материалов:', error);
+    logger.error('calculatorMaterialService', 'Ошибка расчета стоимости материалов', error);
     return {
       material_cost: 0,
       sheets_needed: 0,
@@ -358,7 +380,7 @@ export async function getProductConfigsFromWarehouse(): Promise<Record<string, P
     
     // 🆕 Получаем конфигурацию продуктов из API склада
     const response = await api.get('/product-configs');
-    const warehouseProductConfigs = response.data || [];
+    const warehouseProductConfigs = (response.data as any[]) || [];
     
     // Если в складе нет конфигурации продуктов, создаем базовую на основе материалов
     if (warehouseProductConfigs.length === 0) {
@@ -401,7 +423,7 @@ export async function getProductConfigsFromWarehouse(): Promise<Record<string, P
     
     return productConfigs;
   } catch (error) {
-    console.error('Ошибка загрузки конфигурации продуктов из склада:', error);
+    logger.error('calculatorMaterialService', 'Ошибка загрузки конфигурации продуктов из склада', error);
     // Fallback: создаем базовую конфигурацию
     const paperTypes = await getPaperTypesFromWarehouse();
     const materials = await getMaterialsForCalculator();
@@ -433,7 +455,7 @@ async function createDynamicProductConfigs(
   const productConfigs: Record<string, ProductConfigFromWarehouse> = {};
   
   // Анализируем материалы и создаем продукты
-  const materialCategories = new Set(materials.map(m => m.category_name).filter(Boolean));
+  const materialCategories = new Set<string>((materials as any[]).map(m => m.category_name).filter(Boolean) as string[]);
   
   for (const category of materialCategories) {
     const categoryMaterials = materials.filter(m => m.category_name === category);
@@ -509,7 +531,7 @@ export async function checkRealtimeAvailability(
       alternatives
     };
   } catch (error) {
-    console.error('Ошибка проверки доступности в реальном времени:', error);
+    logger.error('calculatorMaterialService', 'Ошибка проверки доступности в реальном времени', error);
     return {
       available: false,
       available_quantity: 0,
@@ -558,7 +580,7 @@ export async function getMaterialAlternatives(
     // Сортируем по уверенности
     return alternatives.sort((a, b) => b.confidence - a.confidence);
   } catch (error) {
-    console.error('Ошибка получения альтернативных материалов:', error);
+    logger.error('calculatorMaterialService', 'Ошибка получения альтернативных материалов', error);
     return [];
   }
 }
@@ -592,7 +614,7 @@ export async function updateMaterialPrices(): Promise<{
     
     return { updated, errors };
   } catch (error) {
-    console.error('Ошибка обновления цен материалов:', error);
+    logger.error('calculatorMaterialService', 'Ошибка обновления цен материалов', error);
     return { updated: 0, errors: ['Общая ошибка обновления цен'] };
   }
 }
@@ -600,6 +622,7 @@ export async function updateMaterialPrices(): Promise<{
 export default {
   getPaperTypesFromWarehouse,
   getMaterialsForCalculator,
+  getAllWarehouseMaterials,
   checkMaterialAvailability,
   calculateMaterialCost,
   // 🆕 Новые функции

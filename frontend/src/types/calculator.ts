@@ -248,76 +248,23 @@ export const CALCULATOR_CONSTANTS = {
   CACHE_TTL: 300000, // 5 минут
 } as const;
 
-// Плотности бумаги по типам (г/м²)
-export const PAPER_DENSITIES = {
-  offset: [
-    { value: 80, label: '80 г/м²' },
-    { value: 90, label: '90 г/м²' },
-    { value: 100, label: '100 г/м²' },
-    { value: 115, label: '115 г/м²' },
-    { value: 130, label: '130 г/м²' },
-    { value: 150, label: '150 г/м²' },
-    { value: 170, label: '170 г/м²' },
-    { value: 200, label: '200 г/м²' },
-    { value: 250, label: '250 г/м²' },
-    { value: 300, label: '300 г/м²' }
-  ],
-  coated: [
-    { value: 90, label: '90 г/м²' },
-    { value: 115, label: '115 г/м²' },
-    { value: 130, label: '130 г/м²' },
-    { value: 150, label: '150 г/м²' },
-    { value: 170, label: '170 г/м²' },
-    { value: 200, label: '200 г/м²' },
-    { value: 250, label: '250 г/м²' },
-    { value: 300, label: '300 г/м²' },
-    { value: 350, label: '350 г/м²' }
-  ],
-  uncoated: [
-    { value: 80, label: '80 г/м²' },
-    { value: 90, label: '90 г/м²' },
-    { value: 100, label: '100 г/м²' },
-    { value: 115, label: '115 г/м²' },
-    { value: 130, label: '130 г/м²' },
-    { value: 150, label: '150 г/м²' },
-    { value: 170, label: '170 г/м²' },
-    { value: 200, label: '200 г/м²' }
-  ],
-  cardboard: [
-    { value: 200, label: '200 г/м²' },
-    { value: 250, label: '250 г/м²' },
-    { value: 300, label: '300 г/м²' },
-    { value: 350, label: '350 г/м²' },
-    { value: 400, label: '400 г/м²' },
-    { value: 450, label: '450 г/м²' },
-    { value: 500, label: '500 г/м²' },
-    { value: 600, label: '600 г/м²' },
-    { value: 800, label: '800 г/м²' },
-    { value: 1000, label: '1000 г/м²' }
-  ],
-  self_adhesive: [
-    { value: 80, label: '80 г/м²' },
-    { value: 90, label: '90 г/м²' },
-    { value: 100, label: '100 г/м²' },
-    { value: 115, label: '115 г/м²' },
-    { value: 130, label: '130 г/м²' },
-    { value: 150, label: '150 г/м²' },
-    { value: 170, label: '170 г/м²' },
-    { value: 200, label: '200 г/м²' }
-  ]
-} as const;
+// Плотности бумаги загружаются динамически из складского сервиса
+// Используйте: getPaperTypesFromWarehouse() из calculatorMaterialService
 
 // Утилиты для работы с калькулятором
 export const calculatorUtils = {
-  // Получение плотностей бумаги по типу
+  // Получение плотностей бумаги по типу - теперь загружается из склада
+  // Используйте: getPaperDensitiesForType(paperType) из calculatorMaterialService
   getPaperDensities: (paperType: PaperType) => {
-    return PAPER_DENSITIES[paperType] || [];
+    // Данные теперь загружаются из склада
+    return [];
   },
 
-  // Получение плотности по умолчанию для типа бумаги
+  // Получение плотности по умолчанию для типа бумаги - теперь загружается из склада
+  // Используйте: getPaperTypesFromWarehouse() и используйте default_density
   getDefaultPaperDensity: (paperType: PaperType) => {
-    const densities = PAPER_DENSITIES[paperType];
-    return densities && densities.length > 0 ? densities[0].value : 80;
+    // Данные теперь загружаются из склада
+    return 130; // Fallback значение
   },
 
   // Валидация параметров расчета

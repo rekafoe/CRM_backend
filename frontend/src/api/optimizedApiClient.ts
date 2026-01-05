@@ -49,7 +49,7 @@ export class OptimizedApiClient {
   async getOrdersStats(dateFrom: string, dateTo: string) {
     const orders = await this.getOrders();
     const filteredOrders = orders.data.filter((order: any) => {
-      const orderDate = new Date(order.createdAt).toISOString().slice(0, 10);
+      const orderDate = new Date(order.created_at).toISOString().slice(0, 10);
       return orderDate >= dateFrom && orderDate <= dateTo;
     });
 

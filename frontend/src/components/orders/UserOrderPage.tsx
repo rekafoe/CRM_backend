@@ -96,6 +96,7 @@ export const UserOrderPage: React.FC<UserOrderPageProps> = ({
   const loadUserOrderPage = async () => {
     try {
       setLoading(true);
+      setError(null);
       const response = await api.get(`/order-management/pages/user/${userId}?date=${currentDate}`);
       if (response.data.success) {
         setPage(response.data.data.page);
@@ -105,9 +106,16 @@ export const UserOrderPage: React.FC<UserOrderPageProps> = ({
       } else {
         setError('Ошибка при загрузке страницы заказов');
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error loading user order page:', error);
-      setError('Ошибка при загрузке страницы заказов');
+      // 404 = страница не найдена для этой даты — показываем жёлтый блок, а не красную ошибку
+      if (error?.response?.status === 404) {
+        setPage(null);
+        setOrders([]);
+        setError(null);
+      } else {
+        setError('Ошибка при загрузке страницы заказов');
+      }
     } finally {
       setLoading(false);
     }
@@ -386,7 +394,7 @@ export const UserOrderPage: React.FC<UserOrderPageProps> = ({
           </div>
           <div className="bg-purple-50 rounded-lg p-4">
             <div className="text-3xl font-bold text-purple-600">
-              {((page.totalRevenue || 0) / 100).toFixed(0)} руб.
+              {((page.totalRevenue || 0) / 100).toFixed(0)} Br
             </div>
             <div className="text-sm text-purple-600">Общая сумма</div>
           </div>
@@ -474,7 +482,7 @@ export const UserOrderPage: React.FC<UserOrderPageProps> = ({
               </div>
               <div>
                 <span className="text-gray-500">Выручка:</span>
-                <span className="ml-2 font-medium">{changes.stats.totalRevenue} ₽</span>
+                <span className="ml-2 font-medium">{changes.stats.totalRevenue} BYN</span>
               </div>
             </div>
           </div>

@@ -2,13 +2,13 @@
 
 .materials-management {
   padding: 20px;
-  min-height: 100vh;
+  min-height: auto;
   display: flex;
   flex-direction: column;
 }
 
 .materials-management-container {
-  min-height: 100vh;
+  min-height: auto;
   display: flex;
   flex-direction: column;
 }
@@ -356,13 +356,16 @@ body {
   background: var(--bg-secondary) !important;
   border: 1px solid var(--border-color) !important;
   border-radius: 6px !important;
-  padding: 10px !important;
+  padding: 16px !important;
   transition: all 0.3s ease;
   box-shadow: 0 1px 3px var(--shadow) !important;
   max-width: 100%;
-  min-height: auto !important;
+  height: 100% !important;
+  min-height: 450px !important;
   overflow: hidden !important;
   position: relative !important;
+  display: flex !important;
+  flex-direction: column !important;
 }
 
 .warehouse-dashboard .materials-management .material-card:hover,
@@ -444,9 +447,10 @@ body {
 .materials-management .material-actions {
   display: flex !important;
   gap: 4px !important;
-  margin-top: 10px !important;
+  margin-top: auto !important;
   width: 100% !important;
   box-sizing: border-box !important;
+  flex-shrink: 0 !important;
 }
 
 /* Compact button styles - MAXIMUM SPECIFICITY */
@@ -469,8 +473,17 @@ body {
 }
 
 /* Compact card styles */
+.materials-management .material-card-header {
+  flex-shrink: 0 !important;
+  margin-bottom: 16px !important;
+}
+
 .materials-management .material-card-body {
-  margin-bottom: 8px !important;
+  margin-bottom: 16px !important;
+  flex: 1 !important;
+  display: flex !important;
+  flex-direction: column !important;
+  overflow: auto !important;
 }
 
 .materials-management .material-description {
@@ -497,7 +510,7 @@ body {
   grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)) !important;
   gap: 16px !important;
   padding: 16px !important;
-  flex: 1 !important;
+  grid-auto-rows: min-content !important;
 }
 
 /* Block/List Styles - MAXIMUM SPECIFICITY */

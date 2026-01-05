@@ -87,6 +87,14 @@ export const OrderEditModal: React.FC<OrderEditModalProps> = ({
       newErrors.prepaymentAmount = 'Сумма предоплаты должна быть положительным числом';
     }
     
+    // Проверяем, что предоплата не больше общей суммы заказа
+    if (order && prepaymentAmount > 0) {
+      const totalOrderAmount = order.items.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+      if (prepaymentAmount > totalOrderAmount) {
+        newErrors.prepaymentAmount = `Предоплата не может быть больше общей суммы заказа (${totalOrderAmount.toLocaleString()} BYN)`;
+      }
+    }
+    
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   }, [formData]);
@@ -302,7 +310,7 @@ export const OrderEditModal: React.FC<OrderEditModalProps> = ({
                   
                   <div className="info-item">
                     <label>Дата создания:</label>
-                    <span>{new Date(order.createdAt).toLocaleString('ru-RU')}</span>
+                    <span>{new Date(order.created_at).toLocaleString('ru-RU')}</span>
                   </div>
                   
                   <div className="info-item">

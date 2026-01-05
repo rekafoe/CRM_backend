@@ -1,9 +1,4 @@
 export { ImprovedPrintingCalculatorModal } from './ImprovedPrintingCalculatorModal';
-export { EnhancedProductSelector } from './EnhancedProductSelector';
 export { QuickTemplates } from './QuickTemplates';
 export { ComparisonModal } from './ComparisonModal';
 export { AIDashboard } from './AIDashboard';
-export { DynamicPricingManager } from './DynamicPricingManager';
-export { PriceCalculator } from './PriceCalculator';
-export { ProductSelector } from './ProductSelector';
-export { SpecificationsForm } from './SpecificationsForm';

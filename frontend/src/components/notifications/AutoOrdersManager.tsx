@@ -98,7 +98,7 @@ export const AutoOrdersManager: React.FC<AutoOrdersManagerProps> = ({ onClose })
                     <div className="order-id">Заказ #{order.id}</div>
                     <div className="order-supplier">{order.supplierName}</div>
                     <div className="order-date">
-                      {new Date(order.createdAt).toLocaleString('ru-RU')}
+                      {new Date(order.created_at).toLocaleString('ru-RU')}
                     </div>
                   </div>
                   <div className="order-status">

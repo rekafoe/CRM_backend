@@ -4,28 +4,17 @@ interface DateSwitcherProps {
   currentDate: string;
   onDateChange: (newDate: string) => void;
   onClose: () => void;
+  userDates: Array<{ date: string; orderCount: number }>;
 }
 
 export const DateSwitcher: React.FC<DateSwitcherProps> = ({ 
   currentDate, 
   onDateChange, 
-  onClose 
+  onClose,
+  userDates
 }) => {
-  const [recentDates, setRecentDates] = useState<string[]>([]);
-
-  // Генерируем 14 последних дат
-  useEffect(() => {
-    const dates = [];
-    const today = new Date();
-    
-    for (let i = 0; i < 14; i++) {
-      const date = new Date(today);
-      date.setDate(today.getDate() - i);
-      dates.push(date.toISOString().split('T')[0]);
-    }
-    
-    setRecentDates(dates);
-  }, []);
+  // Сортируем даты пользователя по убыванию (новые сначала)
+  const sortedUserDates = userDates.sort((a, b) => b.date.localeCompare(a.date));
 
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
@@ -59,20 +48,29 @@ export const DateSwitcher: React.FC<DateSwitcherProps> = ({
         </h3>
         
         <div className="grid grid-cols-2 gap-2">
-          {recentDates.map((date) => (
-            <button
-              key={date}
-              onClick={() => handleDateSelect(date)}
-              className={`px-3 py-2 text-sm rounded-lg transition-colors text-left ${
-                date === currentDate
-                  ? 'bg-blue-100 text-blue-700 border border-blue-200'
-                  : 'bg-gray-50 hover:bg-gray-100 text-gray-700 border border-gray-200'
-              }`}
-            >
-              <div className="font-medium">{formatDate(date)}</div>
-              <div className="text-xs text-gray-500">{date}</div>
-            </button>
-          ))}
+          {sortedUserDates.length > 0 ? (
+            sortedUserDates.map(({ date, orderCount }) => (
+              <button
+                key={date}
+                onClick={() => handleDateSelect(date)}
+                className={`px-3 py-2 text-sm rounded-lg transition-colors text-left ${
+                  date === currentDate
+                    ? 'bg-blue-100 text-blue-700 border border-blue-200'
+                    : 'bg-gray-50 hover:bg-gray-100 text-gray-700 border border-gray-200'
+                }`}
+              >
+                <div className="font-medium">{formatDate(date)}</div>
+                <div className="text-xs text-gray-500">
+                  {date} • {orderCount} заказ{orderCount === 1 ? '' : orderCount < 5 ? 'а' : 'ов'}
+                </div>
+              </button>
+            ))
+          ) : (
+            <div className="col-span-2 text-center py-4 text-gray-500">
+              <div className="text-sm">📅 Нет данных о работе</div>
+              <div className="text-xs mt-1">Вы еще не создавали заказы</div>
+            </div>
+          )}
         </div>
         
         <div className="mt-3 pt-3 border-t border-gray-200">

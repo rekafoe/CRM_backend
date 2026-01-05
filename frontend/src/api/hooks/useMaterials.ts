@@ -20,7 +20,14 @@ export const useMaterials = (filters: MaterialFilters = {}) => {
     queryKey: materialKeys.list(filters),
     queryFn: async () => {
       const response = await api.get<Material[]>(ENDPOINTS.MATERIALS.LIST, filters);
-      return response.data;
+      // Дедупликация по id - оставляем только первое вхождение каждого id
+      const uniqueMaterials = response.data.reduce((acc, material) => {
+        if (!acc.find(m => m.id === material.id)) {
+          acc.push(material);
+        }
+        return acc;
+      }, [] as Material[]);
+      return uniqueMaterials;
     },
     staleTime: 10 * 60 * 1000, // 10 минут
   });

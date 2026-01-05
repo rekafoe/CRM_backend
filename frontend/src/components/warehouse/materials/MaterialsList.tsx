@@ -42,8 +42,16 @@ export const MaterialsList: React.FC<MaterialsListProps> = ({
 }) => {
   // Фильтрация и сортировка материалов
   const filteredAndSortedMaterials = useMemo(() => {
+    // Дедупликация по id - оставляем только первое вхождение каждого id
+    const uniqueMaterials = materials.reduce((acc, material) => {
+      if (!acc.find(m => m.id === material.id)) {
+        acc.push(material);
+      }
+      return acc;
+    }, [] as Material[]);
+
     // Фильтруем только обычные материалы, исключая типы бумаги
-    let filtered = materials.filter(material => 
+    let filtered = uniqueMaterials.filter(material => 
       !material.paper_type_id || material.category_name !== 'Типы бумаги'
     );
 
@@ -199,7 +207,7 @@ export const MaterialsList: React.FC<MaterialsListProps> = ({
 
   // Сеточный режим (grid)
   return (
-    <div className="materials-list grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
+    <div className="materials-list grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3" style={{ alignItems: 'stretch' }}>
       {filteredAndSortedMaterials.map(material => (
         <MaterialCard
           key={material.id}

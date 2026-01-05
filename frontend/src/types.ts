@@ -13,6 +13,7 @@ export interface ItemParams {
     sheets?: number;
     waste?: number;
     clicks?: number;
+    [key: string]: any;
   };
   materials?: Array<{
     material: { id: number; name: string };
@@ -27,6 +28,15 @@ export interface ItemParams {
   sheetsNeeded?: number;
   piecesPerSheet?: number;
   formatInfo?: string;
+  parameterSummary?: Array<{ key?: string; label: string; value: string }>;
+  productId?: number;
+  productName?: string;
+  layout?: {
+    sheetsNeeded?: number;
+    itemsPerSheet?: number;
+    sheetSize?: string;
+    wastePercentage?: number;
+  };
 }
 
 export interface Item {
@@ -52,8 +62,10 @@ export interface Order {
   id: number;
   number: string;
   status: number;
-  createdAt: string;
+  created_at: string;
   userId?: number;
+  // Источник заказа
+  source?: 'crm' | 'website' | 'telegram';
   // Customer information
   customerName?: string;
   customerPhone?: string;
@@ -72,6 +84,8 @@ export interface Order {
   priority?: 'low' | 'normal' | 'high' | 'urgent';
   estimatedCompletion?: string;
   actualCompletion?: string;
+  // Soft cancel marker for online orders
+  is_cancelled?: number;
 }
 
 export interface PresetExtra {
@@ -147,7 +161,26 @@ export interface OrderFile {
   approvedBy?: number;
 }
 
-export interface Printer { id: number; code: string; name: string }
+export interface Printer {
+  id: number;
+  code: string;
+  name: string;
+  technology_code?: string | null;
+  counter_unit?: 'sheets' | 'meters';
+  max_width_mm?: number | null;
+  color_mode?: 'bw' | 'color' | 'both';
+  printer_class?: 'office' | 'pro';
+  price_single?: number | null;
+  price_duplex?: number | null;
+  price_per_meter?: number | null;
+  price_bw_single?: number | null;
+  price_bw_duplex?: number | null;
+  price_color_single?: number | null;
+  price_color_duplex?: number | null;
+  price_bw_per_meter?: number | null;
+  price_color_per_meter?: number | null;
+  is_active?: number;
+}
 
 // API Response types
 export interface ApiResponse<T = any> {

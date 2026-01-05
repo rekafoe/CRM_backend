@@ -94,8 +94,8 @@ export const PrepaymentDetailsModal: React.FC<PrepaymentDetailsModalProps> = ({
                   </div>
                   <div className="payment-method-display">
                     <span className="method-label">Способ оплаты:</span>
-                    <span className={`method-badge ${order.paymentMethod === 'online' ? 'online' : 'offline'}`}>
-                      {order.paymentMethod === 'online' ? '🌐 Онлайн' : '🏪 Оффлайн'}
+                    <span className={`method-badge ${order.paymentMethod === 'online' ? 'online' : order.paymentMethod === 'telegram' ? 'telegram' : 'offline'}`}>
+                      {order.paymentMethod === 'online' ? '🌐 Онлайн' : order.paymentMethod === 'telegram' ? '📱 Telegram' : '🏪 Оффлайн'}
                     </span>
                   </div>
                 </div>

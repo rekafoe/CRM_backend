@@ -11,10 +11,9 @@ import {
 } from "../../api";
 import { useNavigate } from 'react-router-dom';
 import AddItemModal from "../AddItemModal";
-import ManageMaterialsModal from "../ManageMaterialsModal";
 import ManagePresetsModal from "../ManagePresetsModal";
 import { PrepaymentModal } from "../PrepaymentModal";
-import { ImprovedPrintingCalculatorModal } from "../calculator/ImprovedPrintingCalculatorModal";
+import { FeatureFlaggedCalculator } from "../calculator/FeatureFlaggedCalculator";
 import { PaperTypesManager } from "../PaperTypesManager";
 import { CountersPage } from "../../pages/CountersPage";
 import { useToastNotifications } from "../Toast";
@@ -25,18 +24,20 @@ import "../../styles/admin-cards.css";
 import { ProgressBar } from "../order/ProgressBar";
 import { OrderTotal } from "../order/OrderTotal";
 import { FilesModal } from "../FilesModal";
-import { PrepaymentDetailsModal } from "../PrepaymentDetailsModal";
 import { OrderPool } from "../orders/OrderPool";
 import { UserOrderPage } from "../orders/UserOrderPage";
-import { DateSwitcher } from "../orders/DateSwitcher";
+import { TopBar } from "./TopBar";
+import { DateSwitchContainer } from "../orders/DateSwitchContainer";
 import { setAuthToken, getOrderStatuses, listOrderFiles, uploadOrderFile, deleteOrderFile, approveOrderFile, createPrepaymentLink, getLowStock, getCurrentUser, getUsers, getDailyReportByDate, createDailyReport } from '../../api';
 import { APP_CONFIG } from '../../types';
 import type { OrderFile } from '../../types';
-import { StateManagementTestPanel } from '../StateManagementTestPanel';
-import { OptimizedOrderList } from './OptimizedOrderList';
+
 import { MemoizedOrderItem } from './MemoizedOrderItem';
 import { MemoizedOrderList } from './MemoizedOrderList';
-import { OrderManagementPage } from '../../pages/OrderManagementPage';
+import { useOptimizedAppData } from './hooks/useOptimizedAppData';
+import { useModalState } from './hooks/useModalState';
+import { useOrderHandlers } from './hooks/useOrderHandlers';
+import { OrderDetailSection } from './components/OrderDetailSection';
 
 interface OptimizedAppProps {
   onClose?: () => void;
@@ -44,38 +45,73 @@ interface OptimizedAppProps {
 
 // Основной компонент приложения с оптимизацией
 export const OptimizedApp: React.FC<OptimizedAppProps> = ({ onClose }) => {
-  const [orders, setOrders] = useState<Order[]>([]);
+  const navigate = useNavigate();
   const [selectedId, setSelectedId] = useState<number | null>(null);
-  const [showAddItem, setShowAddItem] = useState(false);
-  const [showMaterials, setShowMaterials] = useState(false);
-  const [showPresets, setShowPresets] = useState(false);
-  const [statuses, setStatuses] = useState<Array<{ id: number; name: string; color?: string; sort_order: number }>>([]);
-  const [files, setFiles] = useState<OrderFile[]>([]);
   const [prepayAmount, setPrepayAmount] = useState<string>('');
-  const [lowStock, setLowStock] = useState<any[]>([]);
-  const [showPrepaymentModal, setShowPrepaymentModal] = useState(false);
   const [currentPage, setCurrentPage] = useState<string>('orders');
-  const [currentUser, setCurrentUser] = useState<{ id: number; name: string; role: string } | null>(null);
-  const [allUsers, setAllUsers] = useState<Array<{ id: number; name: string }>>([]);
   const [contextDate, setContextDate] = useState<string>(() => new Date().toISOString().slice(0,10));
   const [contextUserId, setContextUserId] = useState<number | null>(null);
-  const [showTopPicker, setShowTopPicker] = useState(false);
-  const [showPrintingCalculator, setShowPrintingCalculator] = useState(false);
-  const [showPaperTypesManager, setShowPaperTypesManager] = useState(false);
-  const [showFilesModal, setShowFilesModal] = useState(false);
-  const [showPrepaymentDetailsModal, setShowPrepaymentDetailsModal] = useState(false);
-  const [showOrderPool, setShowOrderPool] = useState(false);
-  const [showUserOrderPage, setShowUserOrderPage] = useState(false);
-  const [showCountersPage, setShowCountersPage] = useState(false);
   const [orderManagementTab, setOrderManagementTab] = useState<'pool' | 'page'>('pool');
-  const [showPageSwitcher, setShowPageSwitcher] = useState(false);
-  
-  // Реф для отслеживания предыдущих значений и предотвращения циклов
-  const prevValuesRef = useRef({ currentUser: null, contextUserId: null, contextDate: null });
 
   // Хуки для уведомлений и логирования
   const toast = useToastNotifications();
   const logger = useLogger('OptimizedApp');
+
+  // Хук для загрузки данных
+  const {
+    orders,
+    setOrders,
+    statuses,
+    files,
+    lowStock,
+    currentUser,
+    setCurrentUser,
+    allUsers,
+    loadOrders,
+  } = useOptimizedAppData(contextDate, contextUserId, selectedId);
+
+  // Хук для состояния модальных окон
+  const modalState = useModalState();
+
+  // Хук для обработчиков заказов
+  const orderHandlers = useOrderHandlers({
+    orders,
+    setOrders,
+    selectedId,
+    setSelectedId,
+    contextDate,
+    loadOrders,
+    closeCalculator: modalState.closeCalculator,
+  });
+
+  // Деструктуризация modalState для удобства
+  const {
+    showAddItem,
+    setShowAddItem,
+    showPresets,
+    setShowPresets,
+    showPrepaymentModal,
+    setShowPrepaymentModal,
+    showTopPicker,
+    setShowTopPicker,
+    showPrintingCalculator,
+    showPaperTypesManager,
+    setShowPaperTypesManager,
+    showFilesModal,
+    setShowFilesModal,
+    showOrderPool,
+    setShowOrderPool,
+    showUserOrderPage,
+    setShowUserOrderPage,
+    showCountersPage,
+    setShowCountersPage,
+    showPageSwitcher,
+    setShowPageSwitcher,
+    calculatorContext,
+    closeCalculator,
+    openCalculator,
+    openCalculatorForEdit,
+  } = modalState;
 
   // Мемоизированные обработчики
   const handleLogout = useCallback(() => {
@@ -88,118 +124,63 @@ export const OptimizedApp: React.FC<OptimizedAppProps> = ({ onClose }) => {
     location.href = '/login';
   }, []);
 
-  const loadOrders = useCallback((date?: string) => {
-    const targetDate = (date || contextDate).slice(0,10);
-    const uid = contextUserId ?? currentUser?.id ?? null;
-    
-    getOrders().then((res) => {
-      const filtered = res.data
-        .filter(o => {
-          if (!o.createdAt) return false;
-          const orderDate = new Date(o.createdAt).toISOString().slice(0,10);
-          return orderDate === targetDate;
-        })
-        .filter(o => uid == null ? true : ((o as any).userId == null || (o as any).userId === uid));
-      
-      // Убираем дубликаты по ID
-      const uniqueOrders = filtered.filter((order, index, self) => 
-        index === self.findIndex(o => o.id === order.id)
-      );
-      
-      setOrders(uniqueOrders);
-      if (!selectedId && uniqueOrders.length) setSelectedId(uniqueOrders[0].id);
-    }).catch((error) => {
-      logger.error('Failed to load orders', error);
-      toast.error('Ошибка загрузки заказов', error.message);
-    });
-  }, [contextDate, contextUserId, currentUser, selectedId]);
-
-  // Стабильная функция для обновления даты с полной перезагрузкой
+  // Простая функция для обновления даты
   const handleDateChange = useCallback((newDate: string) => {
     setContextDate(newDate);
-    // Полная перезагрузка заказов для избежания визуальных багов
-    const targetDate = newDate.slice(0,10);
-    const uid = contextUserId ?? currentUser?.id ?? null;
-    
-    getOrders().then((res) => {
-      const filtered = res.data
-        .filter(o => {
-          if (!o.createdAt) return false;
-          const orderDate = new Date(o.createdAt).toISOString().slice(0,10);
-          return orderDate === targetDate;
-        })
-        .filter(o => uid == null ? true : ((o as any).userId == null || (o as any).userId === uid));
-      
-      // Убираем дубликаты по ID
-      const uniqueOrders = filtered.filter((order, index, self) => 
-        index === self.findIndex(o => o.id === order.id)
-      );
-      
-      setOrders(uniqueOrders);
-      if (!selectedId && uniqueOrders.length) setSelectedId(uniqueOrders[0].id);
-    }).catch((error) => {
-      logger.error('Failed to load orders', error);
-      toast.error('Ошибка загрузки заказов', error.message);
-    });
-  }, [contextUserId, currentUser, selectedId]);
+  }, []);
 
-  const handleCreateOrder = useCallback(async () => {
-    const res = await createOrder(contextDate);
-    const order = res.data;
-    // Убираем дубликаты и добавляем новый заказ в начало
-    const uniqueOrders = orders.filter(o => o.id !== order.id);
-    setOrders([order, ...uniqueOrders]);
-    setSelectedId(order.id);
-  }, [orders, contextDate]);
+  const handleOpenCalculator = useCallback(
+    (productType?: string) => {
+      openCalculator(productType, selectedId ?? undefined);
+    },
+    [selectedId, openCalculator]
+  );
 
-  const handleAddToOrder = useCallback(async (item: any) => {
+  const handleOpenCalculatorForEdit = useCallback((orderId: number, item: any) => {
+    setSelectedId((prev) => prev ?? orderId);
+    openCalculatorForEdit(orderId, item);
+  }, [openCalculatorForEdit]);
+
+  // Мемоизированные колбэки для модальных окон
+  const handleShowFilesModal = useCallback(() => setShowFilesModal(true), [setShowFilesModal]);
+  const handleShowPrepaymentModal = useCallback(() => setShowPrepaymentModal(true), [setShowPrepaymentModal]);
+  const handleShowPresets = useCallback(() => setShowPresets(true), [setShowPresets]);
+  const handleShowPaperTypesManager = useCallback(() => setShowPaperTypesManager(true), [setShowPaperTypesManager]);
+
+  // Мемоизированные обёртки для API функций
+  const handleGetDailyReportByDate = useCallback(async (date: string) => {
+    return await getDailyReportByDate(date);
+  }, []);
+
+  const handleCreateDailyReport = useCallback(async (params: { report_date: string; user_id: number }) => {
+    return await createDailyReport(params);
+  }, []);
+
+  // Мемоизированные обработчики для topbar picker
+  const handleDateChangeInPicker = useCallback(async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const newDate = e.target.value;
+    setContextDate(newDate);
+    setShowTopPicker(false);
+    // Не вызываем loadOrders - useEffect в useOptimizedAppData уже обработает изменение даты
     try {
-      let orderId = selectedId;
-      
-      if (!orderId) {
-        const res = await createOrder(contextDate);
-        orderId = res.data.id;
-        setSelectedId(orderId);
-        await loadOrders();
-      }
-      
-      const apiItem = {
-        type: item.type || item.name || 'Товар из калькулятора',
-        params: {
-          description: item.description || 'Описание товара',
-          specifications: item.specifications,
-          materials: item.materials,
-          services: item.services,
-          productionTime: item.productionTime,
-          productType: item.productType,
-          urgency: item.urgency,
-          customerType: item.customerType,
-          estimatedDelivery: item.estimatedDelivery
-        },
-        price: item.price || 0,
-        quantity: item.quantity || 1,
-        printerId: undefined,
-        sides: item.specifications?.sides || 1,
-        sheets: 1,
-        waste: 0,
-        clicks: 1,
-        components: item.materials?.map((m: any) => ({
-          materialId: m.material.id,
-          qtyPerItem: m.quantity / item.quantity
-        })) || []
-      };
-      
-      await addOrderItem(orderId, apiItem);
-      await loadOrders();
-      setShowPrintingCalculator(false);
-      
-      toast.success('Товар добавлен в заказ!', 'Товар успешно добавлен в заказ');
-      logger.info('Item added to order');
+      const uid = contextUserId ?? currentUser?.id ?? undefined;
+      await getDailyReportByDate(newDate).catch(() => Promise.resolve());
     } catch (error) {
-      logger.error('Failed to add item to order', error);
-      toast.error('Ошибка добавления товара', (error as Error).message);
+      // Игнорируем ошибки
     }
-  }, [selectedId, loadOrders, toast, logger]);
+  }, [contextUserId, currentUser?.id, setShowTopPicker]);
+
+  const handleUserIdChangeInPicker = useCallback(async (e: React.ChangeEvent<HTMLSelectElement>) => {
+    const uid = e.target.value ? Number(e.target.value) : null;
+    setContextUserId(uid);
+    setShowTopPicker(false);
+    // Не вызываем loadOrders - useEffect в useOptimizedAppData уже обработает изменение пользователя
+    try {
+      await getDailyReportByDate(contextDate).catch(() => Promise.resolve());
+    } catch (error) {
+      // Игнорируем ошибки
+    }
+  }, [contextDate, setShowTopPicker]);
 
   // Мемоизированные вычисления
   const selectedOrder = useMemo(() => {
@@ -216,183 +197,26 @@ export const OptimizedApp: React.FC<OptimizedAppProps> = ({ onClose }) => {
 
   // Эффекты
   useEffect(() => {
-    getOrderStatuses().then(r => setStatuses(r.data));
-    getCurrentUser().then(r => setCurrentUser(r.data)).catch(() => setCurrentUser(null));
-    getUsers().then(r => setAllUsers(r.data)).catch(() => setAllUsers([]));
-    if (typeof window !== 'undefined' && localStorage.getItem(APP_CONFIG.storage.role) === 'admin') {
-      getLowStock().then(r => setLowStock(r.data as any[]));
-    }
-  }, []);
-
-  useEffect(() => {
     if (currentUser && !contextUserId) setContextUserId(currentUser.id);
   }, [currentUser, contextUserId]);
-
-  useEffect(() => {
-    if (currentUser) {
-      const targetDate = contextDate.slice(0,10);
-      const uid = contextUserId ?? currentUser?.id ?? null;
-      
-      // Проверяем, изменились ли значения
-      const prevValues = prevValuesRef.current;
-      const hasChanged = 
-        prevValues.currentUser !== currentUser ||
-        prevValues.contextUserId !== contextUserId ||
-        prevValues.contextDate !== contextDate;
-      
-      if (!hasChanged) {
-        return; // Пропускаем если значения не изменились
-      }
-      
-      // Обновляем предыдущие значения
-      prevValuesRef.current = { currentUser, contextUserId, contextDate };
-      
-      getOrders().then((res) => {
-        const filtered = res.data
-          .filter(o => {
-            if (!o.createdAt) return false;
-            const orderDate = new Date(o.createdAt).toISOString().slice(0,10);
-            return orderDate === targetDate;
-          })
-          .filter(o => uid == null ? true : ((o as any).userId == null || (o as any).userId === uid));
-        
-        // Убираем дубликаты по ID
-        const uniqueOrders = filtered.filter((order, index, self) => 
-          index === self.findIndex(o => o.id === order.id)
-        );
-        
-        setOrders(uniqueOrders);
-        // Устанавливаем selectedId только если его нет и есть заказы
-        if (!selectedId && uniqueOrders.length > 0) {
-          setSelectedId(uniqueOrders[0].id);
-        }
-      }).catch((error) => {
-        logger.error('Failed to load orders', error);
-        toast.error('Ошибка загрузки заказов', error.message);
-      });
-    }
-  }, [currentUser, contextUserId, contextDate]);
-
-  useEffect(() => {
-    if (selectedId) {
-      listOrderFiles(selectedId).then(r => {
-        setFiles(r.data);
-      }).catch((error) => {
-        logger.error('Failed to load files for order', error);
-        toast.error('Ошибка загрузки файлов', 'Не удалось загрузить файлы для заказа');
-        setFiles([]);
-      });
-    } else {
-      setFiles([]);
-    }
-  }, [selectedId]);
 
   return (
     <div className="app">
       {currentPage === 'orders' && (
         <>
-          <div className="app-topbar">
-            <div className="topbar-info">
-              <button 
-                className="chip chip--clickable" 
-                onClick={() => setShowPageSwitcher(true)} 
-                title="Переключиться между страницами заказов" 
-                aria-label="Переключиться между страницами заказов"
-              >
-                📅 {contextDate} · 👤 {currentUser?.name || ''}
-              </button>
-            </div>
-            <div style={{ display: 'flex', gap: 8 }}>
-              <button 
-                onClick={() => {
-                  setOrderManagementTab('pool');
-                  setShowOrderPool(true);
-                }}
-                title="Пул заказов" 
-                aria-label="Пул заказов" 
-                className="app-icon-btn"
-                style={{ 
-                  backgroundColor: '#2196F3', 
-                  color: 'white', 
-                  border: '2px solid #1976D2',
-                  fontSize: '12px',
-                  fontWeight: 'bold',
-                  minWidth: '50px',
-                  minHeight: '40px',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center'
-                }}
-              >
-                📋
-              </button>
-              <button 
-                onClick={() => {
-                  setOrderManagementTab('page');
-                  setShowUserOrderPage(true);
-                }}
-                title="Мои заказы" 
-                aria-label="Мои заказы" 
-                className="app-icon-btn"
-                style={{ 
-                  backgroundColor: '#4CAF50', 
-                  color: 'white', 
-                  border: '2px solid #45a049',
-                  fontSize: '12px',
-                  fontWeight: 'bold',
-                  minWidth: '50px',
-                  minHeight: '40px',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center'
-                }}
-              >
-                📄
-              </button>
-              <button 
-                onClick={() => setShowCountersPage(true)}
-                title="Счётчики принтеров и кассы" 
-                aria-label="Счётчики принтеров и кассы" 
-                className="app-icon-btn"
-                style={{ 
-                  backgroundColor: '#9C27B0', 
-                  color: 'white', 
-                  border: '2px solid #7B1FA2',
-                  fontSize: '12px',
-                  fontWeight: 'bold',
-                  minWidth: '50px',
-                  minHeight: '40px',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center'
-                }}
-              >
-                📊
-              </button>
-              {currentUser?.role === 'admin' && (
-                <>
-                  <button 
-                    onClick={() => window.location.href = '/adminpanel/reports'}
-                    title="Ежедневные отчёты" 
-                    aria-label="Ежедневные отчёты" 
-                    className="app-icon-btn"
-                  >
-                    📊
-                  </button>
-                  <button 
-                    onClick={() => window.location.href = '/adminpanel'}
-                    title="Админ панель" 
-                    aria-label="Админ панель" 
-                    className="app-icon-btn"
-                  >
-                    ⚙️
-                  </button>
-                </>
-              )}
-              <StateManagementTestPanel />
-              <button onClick={handleLogout} title="Выйти" aria-label="Выйти" className="app-icon-btn">⎋</button>
-            </div>
-          </div>
+          <TopBar
+            contextDate={contextDate}
+            currentUserName={currentUser?.name || ''}
+            isAdmin={currentUser?.role === 'admin'}
+            onShowPageSwitcher={useCallback(() => setShowPageSwitcher(true), [setShowPageSwitcher])}
+            onShowOrderPool={useCallback(() => navigate('/order-pool'), [navigate])}
+            onShowUserOrderPage={useCallback(() => {
+              setOrderManagementTab('page');
+              setShowUserOrderPage(true);
+            }, [setOrderManagementTab, setShowUserOrderPage])}
+            onShowCountersPage={useCallback(() => setShowCountersPage(true), [setShowCountersPage])}
+            onLogout={handleLogout}
+          />
 
           {showTopPicker && (
             <div className="topbar-picker" onMouseLeave={() => setShowTopPicker(false)}>
@@ -401,28 +225,14 @@ export const OptimizedApp: React.FC<OptimizedAppProps> = ({ onClose }) => {
                 <input 
                   type="date" 
                   value={contextDate} 
-                  onChange={async e => {
-                    setContextDate(e.target.value);
-                    setShowTopPicker(false);
-                    try {
-                      const uid = contextUserId ?? currentUser?.id ?? undefined;
-                      await getDailyReportByDate(e.target.value).catch(() => Promise.resolve());
-                    } finally { loadOrders(); }
-                  }} 
+                  onChange={handleDateChangeInPicker}
                 />
               </div>
               <div className="row">
                 <span style={{ width: 90 }}>Пользователь:</span>
                 <select 
                   value={String(contextUserId ?? currentUser?.id ?? '')} 
-                  onChange={async e => {
-                    const uid = e.target.value ? Number(e.target.value) : null;
-                    setContextUserId(uid);
-                    setShowTopPicker(false);
-                    try {
-                      await getDailyReportByDate(contextDate).catch(() => Promise.resolve());
-                    } finally { loadOrders(); }
-                  }}
+                  onChange={handleUserIdChangeInPicker}
                 >
                   {currentUser?.role === 'admin' ? (
                     allUsers.map(u => <option key={u.id} value={u.id}>{u.name}</option>)
@@ -437,7 +247,7 @@ export const OptimizedApp: React.FC<OptimizedAppProps> = ({ onClose }) => {
 
           <aside className="sidebar">
             <div className="sidebar-toolbar">
-              <button className="icon-btn" title="Добавить заказ" aria-label="Добавить заказ" onClick={handleCreateOrder}>＋</button>
+              <button className="icon-btn" title="Добавить заказ" aria-label="Добавить заказ" onClick={orderHandlers.handleCreateOrder}>＋</button>
               <button
                 className="icon-btn"
                 title="Удалить выбранный заказ"
@@ -446,9 +256,7 @@ export const OptimizedApp: React.FC<OptimizedAppProps> = ({ onClose }) => {
                 onClick={async () => {
                   if (!selectedOrder) return;
                   try {
-                    await deleteOrder(selectedOrder.id);
-                    setSelectedId(null);
-                    loadOrders();
+                    await orderHandlers.handleDeleteOrder(selectedOrder.id);
                   } catch (e: any) {
                     alert('Не удалось удалить заказ. Возможно нужна авторизация.');
                   }
@@ -466,182 +274,38 @@ export const OptimizedApp: React.FC<OptimizedAppProps> = ({ onClose }) => {
             />
             
             {currentUser?.role === 'admin' && (
-              <>
-                <button
-                  className="add-order-btn"
-                  style={{ marginTop: 8 }}
-                  onClick={() => setShowMaterials(true)}
-                >
-                  📦 Материалы
-                </button>
-                <button
-                  className="add-order-btn"
-                  style={{ marginTop: 8 }}
-                  onClick={() => setShowPrintingCalculator(true)}
-                >
-                  🧮 Калькулятор
-                </button>
-              </>
+              <button
+                className="add-order-btn"
+                style={{ marginTop: 8 }}
+                onClick={() => handleOpenCalculator()}
+              >
+                🧮 Калькулятор
+              </button>
             )}
           </aside>
 
           <section className="detail">
             {selectedOrder ? (
-              <>
-                <div className="detail-header" style={{ alignItems: 'flex-start' }}>
-                  <div>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 8 }}>
-                      <h2 style={{ margin: 0 }}>{selectedOrder.number}</h2>
-                      <div style={{ display: 'flex', gap: 8 }}>
-                        <button 
-                          onClick={() => setShowFilesModal(true)}
-                          style={{
-                            padding: '6px 12px',
-                            backgroundColor: '#1976d2',
-                            color: 'white',
-                            border: 'none',
-                            borderRadius: '4px',
-                            cursor: 'pointer',
-                            fontSize: '12px',
-                            display: 'flex',
-                            alignItems: 'center',
-                            gap: '4px'
-                          }}
-                          title="Файлы макетов"
-                        >
-                          📁 Файлы
-                        </button>
-                        <button 
-                          onClick={() => setShowPrepaymentDetailsModal(true)}
-                          style={{
-                            padding: '6px 12px',
-                            backgroundColor: '#28a745',
-                            color: 'white',
-                            border: 'none',
-                            borderRadius: '4px',
-                            cursor: 'pointer',
-                            fontSize: '12px',
-                            display: 'flex',
-                            alignItems: 'center',
-                            gap: '4px'
-                          }}
-                          title="Предоплата"
-                        >
-                          💳 Предоплата
-                        </button>
-                      </div>
-                    </div>
-                    <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
-                      <div>
-                        <label style={{ fontSize: 12, color: '#666' }}>Дата</label>
-                        <input 
-                          type="date" 
-                          value={contextDate} 
-                          onChange={async e => {
-                            setContextDate(e.target.value);
-                            try {
-                              const uid = contextUserId ?? currentUser?.id ?? undefined;
-                              await getDailyReportByDate(e.target.value).catch(async () => {
-                                if (uid) await createDailyReport({ report_date: e.target.value, user_id: uid });
-                              });
-                            } finally { loadOrders(); }
-                          }} 
-                          style={{ marginLeft: 8 }} 
-                        />
-                      </div>
-                      <div>
-                        <label style={{ fontSize: 12, color: '#666' }}>Пользователь</label>
-                        <select 
-                          value={String(contextUserId ?? currentUser?.id ?? '')} 
-                          onChange={async e => {
-                            const uid = e.target.value ? Number(e.target.value) : null;
-                            setContextUserId(uid);
-                            try {
-                              await getDailyReportByDate(contextDate).catch(async () => {
-                                if (uid) await createDailyReport({ report_date: contextDate, user_id: uid });
-                              });
-                            } catch {}
-                          }} 
-                          style={{ marginLeft: 8 }}
-                        >
-                          {currentUser?.role === 'admin' ? (
-                            allUsers.map(u => <option key={u.id} value={u.id}>{u.name}</option>)
-                          ) : (
-                            <option value={currentUser?.id}>{currentUser?.name}</option>
-                          )}
-                        </select>
-                      </div>
-                    </div>
-                  </div>
-                  <div className="detail-actions">
-                    <select
-                      value={String(selectedOrder.status)}
-                      onChange={async (e) => {
-                        const newStatus = Number(e.target.value);
-                        try {
-                          await updateOrderStatus(selectedOrder.id, newStatus);
-                          loadOrders();
-                        } catch (err) {
-                          alert('Не удалось обновить статус. Возможно нужна авторизация.');
-                        }
-                      }}
-                      style={{ marginRight: 8 }}
-                    >
-                      {statuses.map((s) => (
-                        <option key={s.id} value={s.sort_order}>{s.name}</option>
-                      ))}
-                    </select>
-                    {typeof window !== 'undefined' && localStorage.getItem('crmRole') === 'admin' && (
-                      <button onClick={() => setShowPresets(true)}>Пресеты</button>
-                    )}
-                    <button onClick={() => setShowPrintingCalculator(true)}>+ Калькулятор</button>
-                    <button onClick={() => setShowPaperTypesManager(true)}>📄 Типы бумаги</button>
-                  </div>
-                </div>
-
-                <ProgressBar
-                  current={selectedOrder.status}
-                  statuses={statuses}
-                  onStatusChange={async (newStatus) => {
-                    try {
-                      await updateOrderStatus(selectedOrder.id, newStatus);
-                      loadOrders();
-                    } catch (e: any) {
-                      alert('Не удалось изменить статус');
-                    }
-                  }}
-                  height="12px"
-                />
-
-                <div className="detail-body">
-                  {selectedOrder.items.length === 0 && (
-                    <div className="item">Пока нет позиций</div>
-                  )}
-
-                  {selectedOrder.items.map((it) => (
-                    <MemoizedOrderItem 
-                      key={it.id} 
-                      item={it} 
-                      orderId={selectedOrder.id} 
-                      onUpdate={loadOrders} 
-                    />
-                  ))}
-                </div>
-
-                <OrderTotal
-                  items={selectedOrder.items.map((it) => ({
-                    id: it.id,
-                    type: it.type,
-                    price: it.price,
-                    quantity: it.quantity ?? 1,
-                  }))}
-                  discount={0}
-                  taxRate={0}
-                  prepaymentAmount={selectedOrder.prepaymentAmount}
-                  prepaymentStatus={selectedOrder.prepaymentStatus}
-                  paymentMethod={selectedOrder.paymentMethod === 'telegram' ? 'online' : selectedOrder.paymentMethod}
-                />
-              </>
+              <OrderDetailSection
+                selectedOrder={selectedOrder}
+                statuses={statuses}
+                contextDate={contextDate}
+                contextUserId={contextUserId}
+                currentUser={currentUser}
+                allUsers={allUsers}
+                onDateChange={handleDateChange}
+                onUserIdChange={setContextUserId}
+                onStatusChange={orderHandlers.handleStatusChange}
+                onLoadOrders={loadOrders}
+                onShowFilesModal={handleShowFilesModal}
+                onShowPrepaymentModal={handleShowPrepaymentModal}
+                onShowPresets={handleShowPresets}
+                onOpenCalculator={handleOpenCalculator}
+                onShowPaperTypesManager={handleShowPaperTypesManager}
+                onEditOrderItem={handleOpenCalculatorForEdit}
+                onGetDailyReportByDate={handleGetDailyReportByDate}
+                onCreateDailyReport={handleCreateDailyReport}
+              />
             ) : (
               <div style={{ padding: '20px', textAlign: 'center' }}>
                 <p>Выберите заказ слева</p>
@@ -685,9 +349,6 @@ export const OptimizedApp: React.FC<OptimizedAppProps> = ({ onClose }) => {
         />
       )}
 
-      {currentUser?.role === 'admin' && showMaterials && (
-        <ManageMaterialsModal onClose={() => setShowMaterials(false)} />
-      )}
 
       {showPresets && (
         <ManagePresetsModal
@@ -707,7 +368,8 @@ export const OptimizedApp: React.FC<OptimizedAppProps> = ({ onClose }) => {
           currentEmail={selectedOrder.customerEmail || ''}
           onPrepaymentCreated={async (amount, email, paymentMethod) => {
             try {
-              const res = await createPrepaymentLink(selectedOrder.id, amount, paymentMethod);
+              const normalizedMethod = paymentMethod === 'telegram' ? 'online' : paymentMethod;
+              const res = await createPrepaymentLink(selectedOrder.id, amount, normalizedMethod);
               await loadOrders();
               setPrepayAmount(String(amount));
               const isEditing = selectedOrder.prepaymentAmount && selectedOrder.prepaymentAmount > 0;
@@ -739,11 +401,19 @@ export const OptimizedApp: React.FC<OptimizedAppProps> = ({ onClose }) => {
       
       {/* Все админ функции теперь доступны через /adminpanel */}
 
-      {/* Калькулятор типографии */}
-      <ImprovedPrintingCalculatorModal
+      {/* Калькулятор типографии (feature-flagged) */}
+      <FeatureFlaggedCalculator
         isOpen={showPrintingCalculator}
-        onClose={() => setShowPrintingCalculator(false)}
-        onAddToOrder={handleAddToOrder}
+        onClose={closeCalculator}
+        onAddToOrder={orderHandlers.handleAddToOrder}
+        initialProductType={calculatorContext.initialProductType}
+        initialProductId={calculatorContext.initialProductId}
+        editContext={
+          calculatorContext.mode === 'edit' && calculatorContext.item && calculatorContext.orderId
+            ? { orderId: calculatorContext.orderId, item: calculatorContext.item }
+            : undefined
+        }
+        onSubmitExisting={calculatorContext.mode === 'edit' ? orderHandlers.handleReplaceOrderItem : undefined}
       />
 
       {/* Настройки калькулятора - теперь это страница, а не модальное окно */}
@@ -764,17 +434,8 @@ export const OptimizedApp: React.FC<OptimizedAppProps> = ({ onClose }) => {
       />
 
       {/* Модальное окно предоплаты */}
-      {selectedOrder && (
-        <PrepaymentDetailsModal
-          isOpen={showPrepaymentDetailsModal}
-          onClose={() => setShowPrepaymentDetailsModal(false)}
-          order={selectedOrder}
-          onPrepaymentUpdate={loadOrders}
-          onOpenPrepaymentModal={() => setShowPrepaymentModal(true)}
-        />
-      )}
 
-      {/* Модальное окно ролей пользователей теперь доступно через /adminpanel */}
+
 
       {/* Стили для заглушек */}
       <style>{`
@@ -990,28 +651,17 @@ export const OptimizedApp: React.FC<OptimizedAppProps> = ({ onClose }) => {
       )}
 
       {/* Модальное окно выбора даты */}
-      {showPageSwitcher && (
-        <div className="new-order-management-overlay">
-          <div className="date-switcher-modal">
-            <div className="new-order-management-header">
-              <h2>📅 Выбор даты</h2>
-              <button 
-                className="close-btn"
-                onClick={() => setShowPageSwitcher(false)}
-              >
-                ×
-              </button>
-            </div>
-            <div className="new-order-management-content">
-              <DateSwitcher 
-                currentDate={contextDate}
-                onDateChange={handleDateChange}
-                onClose={() => setShowPageSwitcher(false)}
-              />
-            </div>
-          </div>
-        </div>
-      )}
+      <DateSwitchContainer
+        currentDate={contextDate}
+        contextUserId={contextUserId}
+        currentUser={currentUser}
+        onDateChange={handleDateChange}
+        onOrdersChange={setOrders}
+        onSelectedIdChange={setSelectedId}
+        selectedId={selectedId}
+        isVisible={showPageSwitcher}
+        onClose={() => setShowPageSwitcher(false)}
+      />
     </div>
   );
 };

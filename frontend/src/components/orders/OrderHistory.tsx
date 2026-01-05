@@ -54,7 +54,7 @@ export const OrderHistory: React.FC<OrderHistoryProps> = ({
           description: 'Заказ создан',
           userId: 1,
           userName: 'Админ',
-          timestamp: order.createdAt,
+          timestamp: order.created_at,
           details: {
             customerName: order.customerName,
             customerPhone: order.customerPhone
